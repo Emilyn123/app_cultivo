@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'pantallas/inicio.dart';
+import 'features/auth/presentation/screens/inicio.dart';
+import 'core/services/database_service.dart';
 
-void main() {
+void main() async {
+  // Asegura que Flutter esté listo antes de arrancar bases de datos
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Despierta a SQLite para que cree o lea las tablas
+  await DatabaseService.instance.database;
+
   runApp(const CalidadDelSuelo()); // <-- Nombre actualizado aquí
 }
 
@@ -11,10 +18,10 @@ class CalidadDelSuelo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Calidad del Suelo', // Este es el nombre que lee el celular
-      home: InicioAnimado(),
+      home: const InicioAnimado(),
     );
   }
 }

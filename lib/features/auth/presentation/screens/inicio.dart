@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'iniciar_sesion.dart';
-import '../widgets/titulo_tul_luum.dart';
+import '../../../../core/widgets/titulo_tul_luum.dart';
 
 class InicioAnimado extends StatefulWidget {
   const InicioAnimado({super.key});

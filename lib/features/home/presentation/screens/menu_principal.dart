@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'seleccion_cultivo.dart';
+import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
