@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
+import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
@@ -141,7 +142,14 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                       ),
                     ),
                     textoBoton: 'Elegir cultivo',
-                    alPresionar: () {},
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SoilDiagnosisScreen(),
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(height: size.height * 0.03),
                 ],
