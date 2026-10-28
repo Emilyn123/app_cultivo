@@ -4,6 +4,9 @@ class CampoTexto extends StatefulWidget {
   final IconData icono;
   final String textoHint;
   final bool esPassword;
+  final TextEditingController? controller;
+  final TextInputType keyboardType;
+  final TextInputAction? textInputAction;
   final String? Function(String?)? validador;
 
   const CampoTexto({
@@ -11,6 +14,9 @@ class CampoTexto extends StatefulWidget {
     required this.icono,
     required this.textoHint,
     this.esPassword = false,
+    this.controller,
+    this.keyboardType = TextInputType.text,
+    this.textInputAction,
     this.validador,
   });
 
@@ -36,13 +42,16 @@ class _CampoTextoState extends State<CampoTexto> {
         border: Border.all(color: Colors.black26),
       ),
       child: TextFormField(
+        controller: widget.controller,
         obscureText: _ocultarTexto,
+        keyboardType: widget.keyboardType,
+        textInputAction: widget.textInputAction,
         validator: widget.validador,
         decoration: InputDecoration(
           hintText: widget.textoHint,
           hintStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+            color: Colors.black54,
           ),
           prefixIcon: Icon(widget.icono, color: const Color(0xFF2E7D32)),
           suffixIcon: widget.esPassword
@@ -52,7 +61,6 @@ class _CampoTextoState extends State<CampoTexto> {
                     color: const Color(0xFF2E7D32),
                   ),
                   onPressed: () {
-                    FocusScope.of(context).unfocus();
                     setState(() {
                       _ocultarTexto = !_ocultarTexto;
                     });
