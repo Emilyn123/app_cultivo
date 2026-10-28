@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/campo_texto.dart'; // <-- IMPORTANTE: Importamos tu widget reutilizable
-import '../widgets/titulo_tul_luum.dart';
-import 'menu_principal.dart'; //dashboard
+import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
+import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
+import '../../../home/presentation/screens/menu_principal.dart'; //dashboard
 import 'registro_usuario.dart'; //registro si no tiene cuenta
 
 // MODIFICACIÓN 1: Cambiamos a StatefulWidget para poder usar la llave del formulario

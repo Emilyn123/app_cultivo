@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pantallas/inicio.dart';
+import 'features/auth/presentation/screens/inicio.dart';
 
 void main() {
   runApp(const CalidadDelSuelo()); // <-- Nombre actualizado aquí

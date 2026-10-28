@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'iniciar_sesion.dart'; // Para poder regresar al login
-import '../widgets/campo_texto.dart'; // <-- IMPORTANTE: Importamos tu nuevo widget reutilizable
-import '../widgets/titulo_tul_luum.dart';
+import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
+import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
 
 // MODIFICACIÓN 1: Cambiamos a StatefulWidget para poder usar la llave del formulario
 class RegistroUsuario extends StatefulWidget {
