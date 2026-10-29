@@ -86,40 +86,40 @@ class SoilDiagnosisScreen extends StatelessWidget {
               child: GridView.count(
                 padding: EdgeInsets.symmetric(
                   horizontal: size.width * 0.05,
-                  vertical: 10,
+                  vertical: 20,
                 ),
                 crossAxisCount: 2,
                 crossAxisSpacing: size.width * 0.04,
                 mainAxisSpacing: size.height * 0.02,
                 childAspectRatio: 1.1, // Hace las tarjetas casi cuadradas
                 children: const [
-                  _MetricCard(
-                    iconoPath: 'assets/images/PH.png', // Representación del pH
+                  MetricCard(
+                    imagenPath: 'assets/images/PH.png', // Representación del pH
                     titulo: 'PH',
                     valor: '4.8',
                     alertaTexto: 'FUERA DE\nRANGO',
-                    isAlertaPeligro: false, // Color rojo oscuro
+                    mostrarAdvertencia: false, // Color rojo oscuro
                   ),
-                  _MetricCard(
-                    iconoPath: 'assets/images/CE.png', // Representación de CE
+                  MetricCard(
+                    imagenPath: 'assets/images/CE.png', // Representación de CE
                     titulo: 'CE',
                     valor: '1.4 Ms/cm',
                     alertaTexto: 'FUERA DE\nRANGO',
-                    isAlertaPeligro: false,
+                    mostrarAdvertencia: false,
                   ),
-                  _MetricCard(
-                    iconoPath: 'assets/images/TEMPERATURA.png', // Termómetro
+                  MetricCard(
+                    imagenPath: 'assets/images/TEMPERATURA.png', // Termómetro
                     titulo: 'TEMP',
                     valor: '22°C',
                     alertaTexto: 'NIVEL\nBAJO',
-                    isAlertaPeligro: false, // Color negro estándar
+                    mostrarAdvertencia: false, // Color negro estándar
                   ),
-                  _MetricCard(
-                    iconoPath: 'assets/images/HUMEDAD.png', // Agua/Tierra
+                  MetricCard(
+                    imagenPath: 'assets/images/HUMEDAD.png', // Agua/Tierra
                     titulo: 'HUMEDAD',
                     valor: '35%',
                     alertaTexto: 'NIVEL\nBAJO',
-                    isAlertaPeligro: false,
+                    mostrarAdvertencia: false,
                   ),
                 ],
               ),
@@ -166,19 +166,21 @@ class SoilDiagnosisScreen extends StatelessWidget {
 }
 
 // --- WIDGET PARA LAS TARJETAS DE MÉTRICAS ---
-class _MetricCard extends StatelessWidget {
-  final String iconoPath;
-  final String titulo;
-  final String valor;
-  final String alertaTexto;
-  final bool isAlertaPeligro;
+class MetricCard extends StatelessWidget {
+  final String imagenPath; // La imagen principal
+  final String titulo; // El texto
+  final String valor; // El número leído por el sensor
+  final String alertaTexto; // Lo que dirá la alerta
+  final bool
+  mostrarAdvertencia; // true si queremos que salga el logo rojo de advertencia
 
-  const _MetricCard({
-    required this.iconoPath,
+  const MetricCard({
+    super.key,
+    required this.imagenPath,
     required this.titulo,
     required this.valor,
     required this.alertaTexto,
-    required this.isAlertaPeligro,
+    this.mostrarAdvertencia = false,
   });
 
   @override
@@ -186,7 +188,7 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFD6DBDB), // Gris claro de las tarjetas
+        color: const Color(0xFFD6DBDB), // Gris claro del cubo
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -197,47 +199,71 @@ class _MetricCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icono de la métrica
-              Text(iconoPath, style: const TextStyle(fontSize: 10)),
-              // Badge de alerta
-              Column(
-                children: [
-                  Icon(
-                    Icons.warning,
-                    color: isAlertaPeligro ? Colors.red[900] : Colors.black,
-                    size: 10,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    alertaTexto,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+              // 1. Imagen principal que tú le pases (la verde)
+              // Usamos Flexible para que no ocupe más espacio del que debe
+              Flexible(
+                child: Image.asset(
+                  imagenPath,
+                  height: 70, // Altura un poco más pequeña
+                  width: 70,
+                  fit: BoxFit.contain,
+                ),
               ),
+              // 2. Imagen de advertencia condicional
+              if (mostrarAdvertencia)
+                // Flexible para que los textos de alerta se ajusten
+                Flexible(
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/images/advertencia.png',
+                        height: 20, // Altura un poco más pequeña
+                        width: 20,
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        // Encoge el texto si no cabe
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          alertaTexto,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                titulo,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              // 3. El Título que le pases
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-              Text(
-                valor,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              // 4. El Valor del sensor
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  valor,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
             ],
