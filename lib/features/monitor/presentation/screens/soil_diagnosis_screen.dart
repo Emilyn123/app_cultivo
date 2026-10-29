@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/tarjeta_cristal.dart'; // Asegúrate de que esta ruta apunte a tu tarjeta_cristal.dart
 import '../../../crops/presentation/screens/seleccion_cultivo.dart'; // Ruta al catálogo de cultivos
 
 class SoilDiagnosisScreen extends StatelessWidget {
