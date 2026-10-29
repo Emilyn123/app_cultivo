@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/encabezado_personalizado.dart';
 import '../../../../core/widgets/tarjeta_cultivo_elegir.dart';
-//import 'comparacion_cultivo.dart';
+import 'comparacion_cultivo.dart';
 
 class SeleccionCultivo extends StatelessWidget {
   const SeleccionCultivo({super.key});
@@ -39,7 +39,14 @@ class SeleccionCultivo extends StatelessWidget {
                     ce: '2.0 a 2.2 mS/cm',
                     temp: '20 y 30°C',
                     humedad: '60% - 80%',
-                    alPresionar: () {},
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ComparacionCultivo(),
+                        ),
+                      );
+                    },
                   ),
                   TarjetaCultivoElegir(
                     imagenPath: 'assets/images/frijol.png',

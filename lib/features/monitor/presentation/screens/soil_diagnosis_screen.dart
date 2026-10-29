@@ -11,9 +11,9 @@ class SoilDiagnosisScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color.fromARGB(
         255,
-        40,
-        65,
-        49,
+        28,
+        41,
+        31,
       ), // Fondo verde muy oscuro
       body: SafeArea(
         child: Column(
