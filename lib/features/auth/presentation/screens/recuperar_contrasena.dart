@@ -210,7 +210,7 @@ class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text(
-                                '¿Recordaste tu contraseña? ',
+                                '¿Ya Recordaste? ',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,

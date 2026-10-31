@@ -43,7 +43,7 @@ class SoilDiagnosisScreen extends StatelessWidget {
                         'Tu tierra carece de los',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -51,7 +51,7 @@ class SoilDiagnosisScreen extends StatelessWidget {
                         'siguientes parametros necesarios',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -204,8 +204,8 @@ class MetricCard extends StatelessWidget {
               Flexible(
                 child: Image.asset(
                   imagenPath,
-                  height: 70, // Altura un poco más pequeña
-                  width: 70,
+                  height: 30, // Altura un poco más pequeña
+                  width: 30,
                   fit: BoxFit.contain,
                 ),
               ),

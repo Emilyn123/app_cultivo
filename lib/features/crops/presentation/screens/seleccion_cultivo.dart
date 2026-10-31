@@ -38,7 +38,7 @@ class SeleccionCultivo extends StatelessWidget {
                     ph: '5.8 - 6.8',
                     ce: '2.0 a 2.2 mS/cm',
                     temp: '20 y 30°C',
-                    humedad: '60% - 80%',
+                    hum: '60% - 80%',
                     alPresionar: () {
                       Navigator.push(
                         context,
@@ -54,7 +54,7 @@ class SeleccionCultivo extends StatelessWidget {
                     ph: '6.5 y 7.5',
                     ce: 'Menor a 1.0 dS/m',
                     temp: '19-25°C',
-                    humedad: '12% a 13%',
+                    hum: '12% a 13%',
                     alPresionar: () {},
                   ),
                   TarjetaCultivoElegir(
@@ -64,7 +64,7 @@ class SeleccionCultivo extends StatelessWidget {
                     ph: '6.2-7.5',
                     ce: '1.5 y 3 mS',
                     temp: '15 y 20 °C',
-                    humedad: '75%',
+                    hum: '75%',
                     alPresionar: () {},
                   ),
                   TarjetaCultivoElegir(
@@ -73,7 +73,7 @@ class SeleccionCultivo extends StatelessWidget {
                     ph: '6.0 - 7.0',
                     ce: '1.2 a 1.5 mS/cm',
                     temp: '18 °C y 22 °C',
-                    humedad: '60% y 80%',
+                    hum: '60% y 80%',
                     alPresionar: () {},
                   ),
                 ],

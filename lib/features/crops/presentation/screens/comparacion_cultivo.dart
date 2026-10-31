@@ -25,7 +25,7 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
       backgroundColor: const Color(0xFF0F1511), // Fondo oscuro
       body: Stack(
         children: [
-          // 1. Imagen de la planta de fondo (Reemplaza con tu asset si tienes uno de fondo completo)
+          // 1. Imagen de la planta de fondo
           SizedBox(
             width: double.infinity,
             height: double.infinity,
@@ -143,10 +143,10 @@ class _AlertaRoja extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           decoration: BoxDecoration(
             // El color ahora tiene ".withOpacity(0.7)" para dejar ver la planta
-            color: const Color(0xFF5C1111).withOpacity(0.7),
+            color: const Color(0xFF5C1111).withAlpha(178),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.redAccent.withOpacity(0.4),
+              color: Colors.redAccent.withAlpha(102),
               width: 1.5,
             ), // Borde sutil
           ),
@@ -157,12 +157,12 @@ class _AlertaRoja extends StatelessWidget {
                 children: [
                   Image.asset('assets/images/advertencia.png', height: 35),
                   const Text(
-                    'Alerta de desajustes de\nparametros',
+                    'Alerta de desajustes\n de parametros',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 15,
                     ),
                   ),
                   Image.asset('assets/images/advertencia.png', height: 35),
@@ -215,10 +215,10 @@ class _AlertaVerde extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             // El color ahora tiene ".withOpacity(0.7)"
-            color: const Color(0xFF2E5325).withOpacity(0.7),
+            color: const Color(0xFF2E5325).withAlpha(178),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.greenAccent.withOpacity(0.4),
+              color: Colors.greenAccent.withAlpha(102),
               width: 1.5,
             ),
           ),

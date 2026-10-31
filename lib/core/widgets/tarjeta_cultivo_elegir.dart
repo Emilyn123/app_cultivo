@@ -7,7 +7,7 @@ class TarjetaCultivoElegir extends StatelessWidget {
   final String ph;
   final String ce;
   final String temp;
-  final String humedad;
+  final String hum;
   final VoidCallback alPresionar;
 
   const TarjetaCultivoElegir({
@@ -17,7 +17,7 @@ class TarjetaCultivoElegir extends StatelessWidget {
     required this.ph,
     required this.ce,
     required this.temp,
-    required this.humedad,
+    required this.hum,
     required this.alPresionar,
   });
 
@@ -38,7 +38,7 @@ class TarjetaCultivoElegir extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
               child: Container(
-                height: size.height * 0.32,
+                height: size.height * 0.37,
                 padding: EdgeInsets.only(
                   top: width * 0.18,
                   left: 10,
@@ -64,7 +64,7 @@ class TarjetaCultivoElegir extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 15,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -77,28 +77,28 @@ class TarjetaCultivoElegir extends StatelessWidget {
                           'PH: $ph',
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 15,
+                            fontSize: 12,
                           ),
                         ),
                         Text(
                           'CE: $ce',
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 15,
+                            fontSize: 12,
                           ),
                         ),
                         Text(
                           'TEMP: $temp',
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 15,
+                            fontSize: 12,
                           ),
                         ),
                         Text(
-                          'HUMEDAD: $humedad',
+                          'HUM: $hum',
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 15,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -137,7 +137,7 @@ class TarjetaCultivoElegir extends StatelessWidget {
 
         // Imagen de la planta que sobresale
         Positioned(
-          top: -20,
+          top: -32,
           left: 0,
           right: 0,
           child: Image.asset(
