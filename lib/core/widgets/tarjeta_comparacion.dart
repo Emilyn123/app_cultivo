@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class TarjetaComparacion extends StatelessWidget {
   final String titulo;
@@ -23,42 +24,50 @@ class TarjetaComparacion extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Cálculo de dimensiones responsivas
-        final paddingH = screenWidth < 360 ? 16.0 : 22.0;
-        final paddingV = screenWidth < 360 ? 14.0 : 18.0;
-        final tamanoTitulo = screenWidth < 360 ? 13.5 : 15.5;
-        final tamanoDato = screenWidth < 360 ? 11.5 : 13.0;
-        final altoImagen = (constraints.maxWidth * 0.28).clamp(70.0, 105.0);
-        final radioBorde = BorderRadius.circular(38);
+        // Cálculo proporcional con clamp para la imagen
+        final double altoImagen = (constraints.maxWidth * 0.28).clamp(
+          70.0,
+          105.0,
+        );
+        final double anchoImagenMax = (constraints.maxWidth * 0.40).clamp(
+          75.0,
+          130.0,
+        );
+        final BorderRadius radioBorde = BorderRadius.circular(38);
 
         // Contenido de los textos
+        // Bloque de textos utilizando AutoSizeText
         Widget bloqueTextos = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            AutoSizeText(
               titulo,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-                fontSize: tamanoTitulo,
+                fontSize: 16.0,
                 letterSpacing: 0.6,
                 height: 1.2,
               ),
+              maxLines: 2,
+              minFontSize: 12.0,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
             ...datos.map(
               (dato) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2.0),
-                child: Text(
+                child: AutoSizeText(
                   dato,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
-                    fontSize: tamanoDato,
+                    fontSize: 13.0,
                     fontWeight: FontWeight.w500,
                     height: 1.25,
                   ),
                   maxLines: 1,
+                  minFontSize: 9.0,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -66,11 +75,11 @@ class TarjetaComparacion extends StatelessWidget {
           ],
         );
 
-        // Contenido de la imagen
+        // Bloque de la imagen ajustado con restricciones y clamp
         Widget bloqueImagen = ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: altoImagen,
-            maxWidth: constraints.maxWidth * 0.42,
+            maxWidth: anchoImagenMax,
           ),
           child: Image.asset(
             imagenPath,
@@ -89,9 +98,9 @@ class TarjetaComparacion extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: paddingH,
-                vertical: paddingV,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
               ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.12),

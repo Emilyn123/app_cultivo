@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'package:calidad_del_suelo/features/tracking/presentation/screens/panel_general_etapas.dart';
 import 'package:flutter/material.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
+import '../../../tracking/presentation/screens/panel_general_etapas.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
@@ -86,7 +88,14 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     descripcion:
                         'Monitorea el estado, salud y crecimiento de tus cultivos.',
                     textoBoton: 'Ver mis cultivos',
-                    alPresionar: () {},
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PanelGeneralEtapas(),
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(height: size.height * 0.02),
 
