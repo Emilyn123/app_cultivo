@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../controllers/auth_controller.dart';
+//import '../../data/repositories/auth_repositorio.dart';
+import 'registro_usuario.dart'; //registro si no tiene cuenta
+import 'recuperar_contrasena.dart'; // Import de la pantalla de recuperación
 import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
 import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
 import '../../../home/presentation/screens/menu_principal.dart'; //dashboard
-import 'registro_usuario.dart'; //registro si no tiene cuenta
-import 'recuperar_contrasena.dart'; // Import de la pantalla de recuperación
 
-// MODIFICACIÓN 1: Cambiamos a StatefulWidget para poder usar la llave del formulario
 class IniciarSesion extends StatefulWidget {
   const IniciarSesion({super.key});
 
@@ -21,8 +22,21 @@ class _IniciarSesionState extends State<IniciarSesion> {
   final TextEditingController _usuarioController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  //final AuthRepositorio _authRepositorio = AuthRepositorio();
+  final AuthController _authController = AuthController();
+
+  @override
+  void initState() {
+    // suscribe los cambios para redibujar la pantalla
+    super.initState();
+    _authController.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
   @override
   void dispose() {
+    _authController.dispose();
     _usuarioController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -91,7 +105,7 @@ class _IniciarSesionState extends State<IniciarSesion> {
                         CampoTexto(
                           controller: _passwordController,
                           icono: Icons.lock,
-                          textoHint: 'contraseña',
+                          textoHint: 'Contraseña',
                           esPassword: true,
                           validador: (valor) {
                             if (valor == null || valor.trim().isEmpty) {
@@ -115,26 +129,71 @@ class _IniciarSesionState extends State<IniciarSesion> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                            onPressed: () {
-                              // Validamos que los campos no estén vacíos
-                              if (_llaveFormulario.currentState!.validate()) {
-                                // --- AQUÍ ESTÁ LA CONEXIÓN DE LA NAVEGACIÓN ---
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MenuPrincipal(),
+
+                            onPressed: _authController.cargando
+                                ? null
+                                : () async {
+                                    if (_llaveFormulario.currentState!
+                                        .validate()) {
+                                      // 1. Llamar al método del repositorio
+                                      final exito = await _authController
+                                          .iniciarSesion(
+                                            correo: _usuarioController.text,
+                                            password: _passwordController.text,
+                                          );
+
+                                      if (!mounted) return;
+
+                                      // 2. Evaluar el resultado
+                                      if (exito) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('¡Bienvenido!'),
+                                            backgroundColor: Color(0xFF2E7D32),
+                                          ),
+                                        );
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const MenuPrincipal(),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              _authController.mensajeError ??
+                                                  'Error de autenticación',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+
+                            child: _authController.cargando
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'INGRESAR',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                );
-                              }
-                            },
-                            child: const Text(
-                              'INGRESAR',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -151,10 +210,11 @@ class _IniciarSesionState extends State<IniciarSesion> {
                             );
                           },
                           child: const Text(
-                            'olvide mi contraseña',
+                            'Olvidaste tu contraseña',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Color.fromARGB(255, 245, 245, 247),
                               fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
@@ -182,7 +242,7 @@ class _IniciarSesionState extends State<IniciarSesion> {
                               child: const Text(
                                 'Registrate',
                                 style: TextStyle(
-                                  color: Colors.blueAccent,
+                                  color: Color.fromARGB(255, 201, 217, 244),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   decoration: TextDecoration.underline,

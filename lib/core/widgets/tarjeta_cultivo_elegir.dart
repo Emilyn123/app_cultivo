@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class TarjetaCultivoElegir extends StatelessWidget {
   final String imagenPath;
@@ -23,130 +24,141 @@ class TarjetaCultivoElegir extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final width = size.width;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final ancho = constraints.maxWidth;
 
-    return Stack(
-      clipBehavior:
-          Clip.none, // Permite que la imagen sobresalga por arriba[cite: 1]
-      children: [
-        // Tarjeta con efecto desenfocado/esmerilado usando dart:ui
-        Align(
+        // Cálculos relativos a la celda con límites seguros
+        final double altoImagen = (ancho * 0.68).clamp(90.0, 140.0);
+        final double desplazamientoTop = (altoImagen * 0.42).clamp(32.0, 50.0);
+        final double paddingSuperior = (altoImagen * 0.70).clamp(48.0, 80.0);
+        final double radioBorde = (ancho * 0.10).clamp(16.0, 22.0);
+
+        return Stack(
+          clipBehavior: Clip.none, // Permite que la imagen sobresalga
           alignment: Alignment.bottomCenter,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-              child: Container(
-                height: size.height * 0.37,
-                padding: EdgeInsets.only(
-                  top: width * 0.18,
-                  left: 10,
-                  right: 10,
-                  bottom: 10,
-                ),
-                decoration: BoxDecoration(
-                  // Fondo verde translúcido para apreciar el efecto de desenfoque
-                  color: const Color(0xFF233526).withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    width: 1.0,
+          children: [
+            // 1. Tarjeta de fondo
+            ClipRRect(
+              borderRadius: BorderRadius.circular(radioBorde),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.only(
+                    top: paddingSuperior,
+                    left: 10.0,
+                    right: 10.0,
+                    bottom: 10.0,
                   ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF233526).withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(radioBorde),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Nombre del cultivo
+                      AutoSizeText(
                         nombre,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 14.0,
                           letterSpacing: 0.5,
                         ),
+                        maxLines: 1,
+                        minFontSize: 10.0,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    // Parámetros del cultivo
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PH: $ph',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+
+                      // Parámetros técnicos
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _itemDato('PH', ph),
+                          const SizedBox(height: 2.0),
+                          _itemDato('CE', ce),
+                          const SizedBox(height: 2.0),
+                          _itemDato('TEMP', temp),
+                          const SizedBox(height: 2.0),
+                          _itemDato('HUM', hum),
+                        ],
+                      ),
+
+                      // Botón
+                      SizedBox(
+                        width: double.infinity,
+                        height: 32.0,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF388E3C),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'CE: $ce',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          'TEMP: $temp',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          'HUM: $hum',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Botón
-                    SizedBox(
-                      width: double.infinity,
-                      height: 35,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF388E3C),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: EdgeInsets.zero,
-                        ),
-                        onPressed: alPresionar,
-                        child: const FittedBox(
-                          child: Text(
+                          onPressed: alPresionar,
+                          child: const AutoSizeText(
                             'SELECCIONAR',
+                            maxLines: 1,
+                            minFontSize: 9.0,
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 12.0,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
 
-        // Imagen de la planta que sobresale
-        Positioned(
-          top: -32,
-          left: 0,
-          right: 0,
-          child: Image.asset(
-            imagenPath,
-            height: width * 0.35,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ],
+            // 2. Imagen sobresaliente
+            Positioned(
+              top: -desplazamientoTop,
+              left: 0,
+              right: 0,
+              child: SizedBox(
+                height: altoImagen,
+                child: Image.asset(
+                  imagenPath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.eco_outlined,
+                    color: Colors.white54,
+                    size: 36.0,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _itemDato(String etiqueta, String valor) {
+    return AutoSizeText(
+      '$etiqueta: $valor',
+      maxLines: 2,
+      minFontSize: 8.0,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: Colors.white70,
+        fontSize: 11.5,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 }

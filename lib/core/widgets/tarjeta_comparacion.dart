@@ -20,8 +20,6 @@ class TarjetaComparacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         // Cálculo proporcional con clamp para la imagen

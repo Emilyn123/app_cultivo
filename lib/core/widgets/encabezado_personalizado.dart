@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class EncabezadoPersonalizado extends StatelessWidget {
   final String titulo;
@@ -12,52 +13,49 @@ class EncabezadoPersonalizado extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: size.width * 0.05,
-        vertical: size.height * 0.02,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
         children: [
-          // Flecha de retroceso a la izquierda
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: size.width * 0.06, // Tamaño responsivo del icono
-              ),
-              onPressed: alPresionarAtras ?? () => Navigator.pop(context),
+          // 1. Botón atrás (tamaño fijo estándar)
+          IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.white,
+              size: 22,
             ),
+            onPressed: alPresionarAtras ?? () => Navigator.pop(context),
           ),
 
-          // Título central responsivo
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: size.width * 0.04,
-              vertical: size.height * 0.01,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
+          // 2. Título centrado con AutoSizeText (ocupa el resto sin tapar el botón)
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14.0,
+                vertical: 8.0,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: AutoSizeText(
                 titulo,
-                style: TextStyle(
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                minFontSize: 11,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize:
-                      size.width * 0.045, // Escala con el ancho de la pantalla
+                  fontSize: 19,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
+
+          // 3. Espaciador compensador (para que el título quede matemáticamente centrado)
+          const SizedBox(width: 47), // Mismo ancho que el IconButton estándar
         ],
       ),
     );

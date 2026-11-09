@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'iniciar_sesion.dart'; // Para poder regresar al login
+import '../controllers/auth_controller.dart';
+//import '../../data/repositories/auth_repositorio.dart';
+import '../../../home/presentation/screens/menu_principal.dart';
 import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
 import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
 
@@ -17,15 +20,28 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
 
   // Controladores para capturar los datos ingresados
   final TextEditingController _nombreController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _correoController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  final AuthController _authController = AuthController();
+  //final AuthRepositorio _authRepositorio = AuthRepositorio();
+
+  @override
+  void initState() {
+    // suscribe los cambios para redibujar la pantalla
+    super.initState();
+    _authController.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
   @override
   void dispose() {
+    _authController.dispose();
     _nombreController.dispose();
-    _emailController.dispose();
+    _correoController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -75,7 +91,7 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
                       const SizedBox(height: 10),
                       const TituloTulLuum(
                         texto:
-                            '!BIENVENIDO¡\ncrea tu cuenta para comenzar a\ncultivar un futuro mejor',
+                            '!BIENVENIDO¡\nCrea tu cuenta para comenzar a\ncultivar un futuro mejor',
                         tamanoFuente: 28.0,
                       ),
 
@@ -111,9 +127,9 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
                               const SizedBox(height: 15),
 
                               CampoTexto(
-                                controller: _emailController,
+                                controller: _correoController,
                                 icono: Icons.email,
-                                textoHint: 'correo electronico',
+                                textoHint: 'correo electrónico',
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
                                 validador: (valor) {
@@ -176,29 +192,90 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
                                       borderRadius: BorderRadius.circular(30),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    // Lógica para registrar usuario
-                                    // ELEMENTO CLAVE PARA TU REPORTE: Ejecutamos la validación
-                                    if (_llaveFormulario.currentState!
-                                        .validate()) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('¡Registro Exitoso!'),
-                                          backgroundColor: Color(0xFF2E7D32),
+                                  //funcion del boton
+                                  onPressed: _authController.cargando
+                                      ? null
+                                      : () async {
+                                          // 1. Validar que los campos cumplan las condiciones
+                                          if (_llaveFormulario.currentState!
+                                              .validate()) {
+                                            // 2. Usar la variable _authRepositorio para guardar en Supabase
+                                            final exito = await _authController
+                                                .registrar(
+                                                  nombreCompleto:
+                                                      _nombreController.text,
+                                                  correo:
+                                                      _correoController.text,
+                                                  password:
+                                                      _passwordController.text,
+                                                );
+
+                                            print(
+                                              "--> [UI] ¿Registro exitoso?: $exito",
+                                            );
+
+                                            if (!mounted) return;
+
+                                            // 3. Evaluar la respuesta
+                                            if (exito) {
+                                              print(
+                                                "--> [UI] Redirigiendo a MenuPrincipal...",
+                                              );
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    '¡Usuario registrado con éxito!',
+                                                  ),
+                                                ),
+                                              );
+
+                                              // Redirigir al Menú Principal
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const MenuPrincipal(),
+                                                ),
+                                              );
+                                            } else {
+                                              print(
+                                                "--> [UI] Fallo de registro: ${_authController.mensajeError}",
+                                              );
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    _authController
+                                                            .mensajeError ??
+                                                        'Error desconocido',
+                                                  ),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        },
+
+                                  child: _authController.cargando
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'REGISTRAR',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      );
-                                    }
-                                  },
-                                  child: const Text(
-                                    'REGISTRAR',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                                 ),
                               ),
                               const SizedBox(height: 15),
@@ -224,7 +301,7 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            '¿ya tienes cuenta? ',
+                            '¿Ya tienes cuenta? ',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -241,9 +318,9 @@ class _RegistroUsuarioState extends State<RegistroUsuario> {
                               );
                             },
                             child: const Text(
-                              'iniciar sesion',
+                              'Iniciar sesion',
                               style: TextStyle(
-                                color: Colors.blueAccent,
+                                color: Color.fromARGB(255, 251, 3, 3),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 decoration: TextDecoration.underline,

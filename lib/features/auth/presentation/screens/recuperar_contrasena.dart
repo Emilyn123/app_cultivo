@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/repositories/auth_repositorio.dart';
 import '../../../../core/widgets/campo_texto.dart'; // Ajusta la ruta según la carpeta donde tengas guardado tu widget
 import '../../../../core/widgets/titulo_tul_luum.dart';
 
@@ -12,8 +13,11 @@ class RecuperarContrasenaScreen extends StatefulWidget {
 
 class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _correoController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final AuthRepositorio _authRepositorio = AuthRepositorio();
+  bool _cargando = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -43,22 +47,42 @@ class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _correoController.dispose();
     _animController.dispose();
     super.dispose();
   }
 
-  void _enviarEnlace() {
+  // 3. Conexión real con Supabase
+  Future<void> _enviarEnlace() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final correo = _emailController.text.trim();
+      setState(() => _cargando = true);
 
-      // Aquí conectas tu servicio de recuperación (Firebase Auth o API REST)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Se ha enviado un enlace de recuperación a: $correo'),
-          backgroundColor: const Color(0xFF2E7D32),
-        ),
+      final String correo = _correoController.text.trim();
+
+      // Llamada al método de Supabase
+      final String? error = await _authRepositorio.restablecerPassword(
+        correo: correo,
       );
+
+      setState(() => _cargando = false);
+
+      if (!mounted) return;
+
+      if (error == null) {
+        // Éxito: Mensaje verde y regreso a la pantalla anterior
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Se ha enviado un enlace de recuperación a: $correo'),
+            backgroundColor: const Color(0xFF2E7D32),
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        // Error reportado por Supabase
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -155,7 +179,7 @@ class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
 
                                   // Campo de texto reutilizable
                                   CampoTexto(
-                                    controller: _emailController,
+                                    controller: _correoController,
                                     icono: Icons.mail,
                                     textoHint: 'correo electrónico',
                                     keyboardType: TextInputType.emailAddress,
@@ -176,7 +200,7 @@ class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
 
                                   // Botón de Enviar Enlace
                                   ElevatedButton(
-                                    onPressed: _enviarEnlace,
+                                    onPressed: _cargando ? null : _enviarEnlace,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF2E7D32),
                                       foregroundColor: Colors.white,
@@ -190,14 +214,23 @@ class _RecuperarContrasenaScreenState extends State<RecuperarContrasenaScreen>
                                         vertical: 14.0,
                                       ),
                                     ),
-                                    child: const Text(
-                                      'ENVIAR ENLACE',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
+                                    child: _cargando
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'ENVIAR ENLACE',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.1,
+                                            ),
+                                          ),
                                   ),
                                 ],
                               ),

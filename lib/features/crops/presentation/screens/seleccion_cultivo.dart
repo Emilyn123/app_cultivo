@@ -8,32 +8,40 @@ class SeleccionCultivo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Tomamos las medidas de la pantalla para el diseño responsivo
     final size = MediaQuery.of(context).size;
 
+    // Márgenes exteriores y separación de filas
+    final paddingLateral = (size.width * 0.05).clamp(14.0, 24.0);
+    final espaciadoColumnas = (size.width * 0.04).clamp(12.0, 18.0);
+    final separacionFilas = (size.height * 0.045).clamp(28.0, 44.0);
+
+    // Columnas adaptativas: 2 en móviles, 3 o 4 en pantallas amplias
+    final int columnas = size.width > 900 ? 4 : (size.width > 600 ? 3 : 2);
+
+    // Proporción de la celda: más alargada en móviles para asegurar espacio al contenido
+    final double proporcionAspecto = size.width > 600 ? 0.65 : 0.54;
+
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF131E17,
-      ), // Fondo verde muy oscuro, casi negro, igual al diseño
+      backgroundColor: const Color(0xFF131E17),
       body: SafeArea(
         child: Column(
           children: [
-            // --- ENCABEZADO: Botón Atrás y Título ---
             const EncabezadoPersonalizado(titulo: 'Selecciona tu cultivo'),
-
-            // --- CUADRÍCULA DE CULTIVOS (Responsiva) ---
             Expanded(
               child: GridView.count(
-                padding: EdgeInsets.all(size.width * 0.05),
-                crossAxisCount: 2, // 2 columnas
-                crossAxisSpacing: size.width * 0.04,
-                mainAxisSpacing: size.height * 0.03,
-                childAspectRatio:
-                    0.52, // Proporción de la tarjeta (más alta que ancha para que quepa el texto)
+                padding: EdgeInsets.symmetric(
+                  horizontal: paddingLateral,
+                  vertical:
+                      30.0, // Margen superior para la imagen de la primera fila
+                ),
+                crossAxisCount: columnas,
+                crossAxisSpacing: espaciadoColumnas,
+                mainAxisSpacing: separacionFilas,
+                childAspectRatio: proporcionAspecto,
+                physics: const BouncingScrollPhysics(),
                 children: [
                   TarjetaCultivoElegir(
-                    imagenPath:
-                        'assets/images/tomate_rojo.png', // Nombre sugerido para tu imagen de Drive
+                    imagenPath: 'assets/images/tomate_rojo.png',
                     nombre: 'TOMATE ROJO',
                     ph: '5.8 - 6.8',
                     ce: '2.0 a 2.2 mS/cm',
@@ -58,8 +66,7 @@ class SeleccionCultivo extends StatelessWidget {
                     alPresionar: () {},
                   ),
                   TarjetaCultivoElegir(
-                    imagenPath:
-                        'assets/images/cilantro.png', // Usa la imagen "Gemini_Generated_Image_ea6px..." de tu Drive
+                    imagenPath: 'assets/images/cilantro.png',
                     nombre: 'CILANTRO',
                     ph: '6.2-7.5',
                     ce: '1.5 y 3 mS',
