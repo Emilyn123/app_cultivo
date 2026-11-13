@@ -2,63 +2,61 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DatabaseService {
+  // Patrón Singleton para mantener una única conexión en toda la app
   static final DatabaseService instance = DatabaseService._init();
   static Database? _database;
 
   DatabaseService._init();
 
-  // Permite conectarnos a la base de datos desde cualquier parte de la app
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('agri_soil.db');
+    _database = await _initDB('agri_soil_local.db');
     return _database!;
   }
 
-  // Inicializa SQLite y ubica dónde guardar el archivo en la memoria del celular
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    // Abre la base de datos y crea las tablas si es la primera vez
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  // 1. CREACIÓN DE LAS TABLAS SOLICITADAS EN LA GUÍA TÉCNICA
+  // Creación de la tabla local para recordar la sesión
   Future _createDB(Database db, int version) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const realType = 'REAL NOT NULL';
-    const intType = 'INTEGER DEFAULT 0';
-
-    // Tabla de Mediciones del Sensor (ESP32)
     await db.execute('''
-CREATE TABLE soil_measurements (
-  id $idType,
-  remote_id TEXT UNIQUE NOT NULL,
-  ph $realType,
-  moisture $realType,
-  temperature $realType,
-  conductivity $realType,
-  measured_at $textType,
-  is_synced $intType
-)
-''');
-
-    // Tabla de Cultivos Activos
-    await db.execute('''
-CREATE TABLE active_crops (
-  id $idType,
-  crop_name $textType,
-  current_stage INTEGER DEFAULT 1,
-  started_at $textType
-)
-''');
+    CREATE TABLE sesion_activa (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_usuario_remoto TEXT NOT NULL,
+      correo TEXT NOT NULL,
+      nombre_completo TEXT,
+      fecha_login TEXT NOT NULL
+    )
+    ''');
   }
 
-  // 2. FUNCIONES PARA LEER Y GUARDAR DATOS (Ejemplo básico)
-  // Cerrar la base de datos de forma segura
-  Future close() async {
+  // Método para guardar el usuario localmente cuando hace login exitoso
+  Future<void> guardarSesionLocal(
+    String idUsuario,
+    String correo,
+    String nombre,
+  ) async {
     final db = await instance.database;
-    db.close();
+    // Borramos cualquier sesión anterior
+    await db.delete('sesion_activa');
+
+    // Guardamos la nueva sesión
+    await db.insert('sesion_activa', {
+      'id_usuario_remoto': idUsuario,
+      'correo': correo,
+      'nombre_completo': nombre,
+      'fecha_login': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // Método para verificar si ya existe una sesión guardada (Para el Auto-Login offline)
+  Future<bool> existeSesionLocal() async {
+    final db = await instance.database;
+    final resultado = await db.query('sesion_activa', limit: 1);
+    return resultado.isNotEmpty;
   }
 }

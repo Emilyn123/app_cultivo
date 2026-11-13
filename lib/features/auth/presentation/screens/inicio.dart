@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'iniciar_sesion.dart';
 import '../../../../core/widgets/titulo_tul_luum.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../home/presentation/screens/menu_principal.dart';
+import '../../../../core/services/database_service.dart';
 
 class InicioAnimado extends StatefulWidget {
   const InicioAnimado({super.key});
@@ -199,15 +202,36 @@ class _InicioAnimadoState extends State<InicioAnimado>
                                           ),
                                         ),
                                       ),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const IniciarSesion(),
-                                          ),
-                                        );
+                                      //1.
+                                      onPressed: () async {
+                                        // 1. Preguntamos a SQLite si ya guardamos la sesión antes (Offline)
+                                        final tieneSesion =
+                                            await DatabaseService.instance
+                                                .existeSesionLocal();
+
+                                        if (!context.mounted) return;
+
+                                        if (tieneSesion) {
+                                          // 2a. Salta el login (No necesita internet)
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MenuPrincipal(),
+                                            ),
+                                          );
+                                        } else {
+                                          // 2b. Requiere login manual
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const IniciarSesion(),
+                                            ),
+                                          );
+                                        }
                                       },
+
                                       child: const Text(
                                         'Comenzar',
                                         style: TextStyle(

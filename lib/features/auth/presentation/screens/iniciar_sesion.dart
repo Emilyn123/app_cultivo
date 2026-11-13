@@ -5,7 +5,9 @@ import 'registro_usuario.dart'; //registro si no tiene cuenta
 import 'recuperar_contrasena.dart'; // Import de la pantalla de recuperación
 import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
 import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
+import '../../../../core/services/database_service.dart';
 import '../../../home/presentation/screens/menu_principal.dart'; //dashboard
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class IniciarSesion extends StatefulWidget {
   const IniciarSesion({super.key});
@@ -130,11 +132,39 @@ class _IniciarSesionState extends State<IniciarSesion> {
                               ),
                             ),
 
+                            //on
                             onPressed: _authController.cargando
                                 ? null
                                 : () async {
                                     if (_llaveFormulario.currentState!
                                         .validate()) {
+                                      // 1. PRIMERO REVISAMOS LA SESIÓN LOCAL (OFFLINE) EN SQLITE
+                                      final tieneSesion = await DatabaseService
+                                          .instance
+                                          .existeSesionLocal();
+
+                                      if (tieneSesion) {
+                                        // Ya existe un token guardado, entra directo sin ir a la nube
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Sesión recuperada offline.',
+                                            ),
+                                            backgroundColor: Color(0xFF2E7D32),
+                                          ),
+                                        );
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const MenuPrincipal(),
+                                          ),
+                                        );
+                                        return; // Detenemos la ejecución aquí
+                                      }
+
                                       // 1. Llamar al método del repositorio
                                       final exito = await _authController
                                           .iniciarSesion(

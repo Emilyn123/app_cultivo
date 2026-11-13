@@ -1,9 +1,13 @@
 import 'dart:ui';
-import 'package:calidad_del_suelo/features/tracking/presentation/screens/panel_general_etapas.dart';
+import 'package:calidad_del_suelo/features/monitor/presentation/screens/captura_manual.dart';
+import 'package:calidad_del_suelo/features/profile/perfil_usuario.dart';
+import 'package:calidad_del_suelo/features/tracking/presentation/screens/mis_cultivos.dart';
 import 'package:flutter/material.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
-//import '../../../tracking/presentation/screens/panel_general_etapas.dart';
+import '../../../../core/widgets/menu_inferior.dart';
+import '../../../profile/perfil_usuario.dart';
+//import '../../../tracking/presentation/screens/mis_cultivos.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
@@ -92,7 +96,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => PanelGeneralEtapas(),
+                          builder: (context) => const MisCultivos(),
                         ),
                       );
                     },
@@ -169,49 +173,36 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       ),
 
       // --- MENÚ INFERIOR (Bottom Navigation Bar) ---
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B3B22).withOpacity(0.85),
-          border: const Border(
-            top: BorderSide(color: Colors.white24, width: 0.5),
-          ),
-        ),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: BottomNavigationBar(
-              backgroundColor: Colors.transparent,
-              type: BottomNavigationBarType.fixed,
-              elevation: 0,
-              selectedItemColor: Colors.white,
-              unselectedItemColor: Colors.white54,
-              currentIndex: _indiceSeleccionado,
-              onTap: (index) {
-                setState(() {
-                  _indiceSeleccionado = index;
-                });
-              },
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_filled),
-                  label: 'Inicio',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.inventory_2_outlined),
-                  label: 'Mis Cultivos',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications_outlined),
-                  label: 'Alertas',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline),
-                  label: 'Perfil',
-                ),
-              ],
-            ),
-          ),
-        ),
+      bottomNavigationBar: MenuInferior(
+        indiceSeleccionado: 0,
+        alSeleccionar: (index) {
+          if (index == 0) {
+            return;
+          }
+          if (index == 1) {
+            // Navegar a la pantalla de Mis Cultivos (Panel General)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MisCultivos()),
+            );
+          }
+          if (index == 2) {
+            // Navegar a la pantalla de Alertas (cuando la crees)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CapturaManualSuelo(),
+              ),
+            );
+          }
+          if (index == 3) {
+            // Navegar a la pantalla de Perfil (cuando la crees)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PerfilUsuario()),
+            );
+          }
+        },
       ),
     );
   }

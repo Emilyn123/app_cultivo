@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/services/database_service.dart';
 
 class AuthRepositorio {
   // Instancia del cliente de Supabase
@@ -47,11 +48,20 @@ class AuthRepositorio {
     required String password,
   }) async {
     try {
-      await _supabase.auth.signInWithPassword(
+      final respuesta = await _supabase.auth.signInWithPassword(
         email: correo.trim(),
         password: password.trim(),
       );
-      return null; // Login exitoso
+
+      // Si el login en la nube fue exitoso, lo guardamos localmente en SQLite
+      if (respuesta.user != null) {
+        await DatabaseService.instance.guardarSesionLocal(
+          respuesta.user!.id,
+          correo,
+          'Agricultor', // O extraer el nombre de la DB
+        );
+      }
+      return null;
     } on AuthException catch (e) {
       return e.message;
     } catch (e) {

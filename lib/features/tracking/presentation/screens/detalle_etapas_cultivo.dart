@@ -1,30 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import '../../../../core/constants/rutas_imagenes.dart';
 import '../../../../core/widgets/tarjeta_comparacion.dart';
-
-class DatosEtapa {
-  final String nombreEtapa;
-  final String rutaFondo;
-  final String rutaCartel;
-  final String rutaIconoRequerimiento;
-  final List<String> requerimientos;
-  final List<String> datosSuelo;
-
-  const DatosEtapa({
-    required this.nombreEtapa,
-    required this.rutaFondo,
-    required this.rutaCartel,
-    required this.rutaIconoRequerimiento,
-    required this.requerimientos,
-    required this.datosSuelo,
-  });
-}
+import '../../../crops/domain/cultivo.dart';
+import '../../../crops/domain/etapa_cultivo.dart';
 
 class DetalleEtapaSeguimiento extends StatefulWidget {
+  final Cultivo cultivo;
   final int etapaInicial;
 
-  const DetalleEtapaSeguimiento({super.key, this.etapaInicial = 0});
+  const DetalleEtapaSeguimiento({
+    super.key,
+    required this.cultivo,
+    this.etapaInicial = 0,
+  });
 
   @override
   State<DetalleEtapaSeguimiento> createState() =>
@@ -35,86 +25,20 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
   late PageController _pageController;
   late int _etapaActual;
 
-  final List<String> _nombresEtapas = const [
-    'SIEMBRA',
-    'GERMINACIÓN',
-    'CRECIMIENTO VEGETATIVO',
-    'AMARRE DEL FRUTO',
-    'MADURACIÓN',
+  // Pendiente: más adelante saldrá de la última lectura de suelo del usuario.
+  static const List<String> _datosSueloPendientes = [
+    'PH: .....',
+    'CE: .....',
+    'TEMP: .....',
+    'HUMEDAD: .....',
   ];
 
-  final List<DatosEtapa> _listaEtapas = const [
-    DatosEtapa(
-      nombreEtapa: 'Siembra',
-      rutaFondo: 'assets/images/follow-up/siembra.png',
-      rutaCartel: 'assets/images/follow-up/e_siembra.png',
-      rutaIconoRequerimiento: 'assets/images/follow-up/semilla.png',
-      requerimientos: [
-        'PH: 5.8 - 6.8',
-        'CE: 2.0 a 2.2 mS/cm',
-        'TEMP: 20 y 30°C',
-        'HUMEDAD: 60% - 80%',
-      ],
-      datosSuelo: ['PH: .....', 'CE: .....', 'TEMP: .....', 'HUMEDAD: .....'],
-    ),
-    DatosEtapa(
-      nombreEtapa: 'Germinación',
-      rutaFondo: 'assets/images/follow-up/f_germ.jpg',
-      rutaCartel: 'assets/images/follow-up/e_germinacion.png',
-      rutaIconoRequerimiento: 'assets/images/follow-up/semilla_hojita.png',
-      requerimientos: [
-        'PH: 5.8 - 6.8',
-        'CE: 2.0 a 2.2 mS/cm',
-        'TEMP: 20 y 30°C',
-        'HUMEDAD: 60% - 80%',
-      ],
-      datosSuelo: ['PH: .....', 'CE: .....', 'TEMP: .....', 'HUMEDAD: .....'],
-    ),
-    DatosEtapa(
-      nombreEtapa: 'Crecimiento vegetativo',
-      rutaFondo: 'assets/images/follow-up/f_crecimiento.jpg',
-      rutaCartel: 'assets/images/follow-up/e_crecimiento.png',
-      rutaIconoRequerimiento: 'assets/images/follow-up/hojitas_creci.png',
-      requerimientos: [
-        'PH: 5.8 - 6.8',
-        'CE: 2.0 a 2.2 mS/cm',
-        'TEMP: 20 y 30°C',
-        'HUMEDAD: 60% - 80%',
-      ],
-      datosSuelo: ['PH: .....', 'CE: .....', 'TEMP: .....', 'HUMEDAD: .....'],
-    ),
-    DatosEtapa(
-      nombreEtapa: 'Amarre del fruto',
-      rutaFondo: 'assets/images/follow-up/f_amarre.jpg',
-      rutaCartel: 'assets/images/follow-up/e_amarre.png',
-      rutaIconoRequerimiento: 'assets/images/follow-up/amarre.png',
-      requerimientos: [
-        'PH: 5.8 - 6.8',
-        'CE: 2.0 a 2.2 mS/cm',
-        'TEMP: 20 y 30°C',
-        'HUMEDAD: 60% - 80%',
-      ],
-      datosSuelo: ['PH: .....', 'CE: .....', 'TEMP: .....', 'HUMEDAD: .....'],
-    ),
-    DatosEtapa(
-      nombreEtapa: 'Maduración',
-      rutaFondo: 'assets/images/follow-up/f_maduracion.jpg',
-      rutaCartel: 'assets/images/follow-up/e_maduracion.png',
-      rutaIconoRequerimiento: 'assets/images/follow-up/planta_tomate.png',
-      requerimientos: [
-        'PH: 5.8 - 6.8',
-        'CE: 2.0 a 2.2 mS/cm',
-        'TEMP: 20 y 30°C',
-        'HUMEDAD: 60% - 80%',
-      ],
-      datosSuelo: ['PH: .....', 'CE: .....', 'TEMP: .....', 'HUMEDAD: .....'],
-    ),
-  ];
+  List<EtapaCultivo> get _etapas => widget.cultivo.etapas;
 
   @override
   void initState() {
     super.initState();
-    _etapaActual = widget.etapaInicial.clamp(0, _listaEtapas.length - 1);
+    _etapaActual = widget.etapaInicial.clamp(0, _etapas.length - 1);
     _pageController = PageController(initialPage: _etapaActual);
   }
 
@@ -136,6 +60,9 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
   Widget build(BuildContext context) {
     // 1. MediaQuery: Consulta las dimensiones exactas del dispositivo
     final Size tamanoPantalla = MediaQuery.of(context).size;
+    final String carpeta = widget.cultivo.carpetaImagenes;
+    final List<String> nombresEtapas =
+        _etapas.map((e) => e.nombre.toUpperCase()).toList();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -150,21 +77,21 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
             // PageView que permite deslizar entre las etapas
             PageView.builder(
               controller: _pageController,
-              itemCount: _listaEtapas.length,
+              itemCount: _etapas.length,
               onPageChanged: (nuevoIndice) {
                 setState(() {
                   _etapaActual = nuevoIndice;
                 });
               },
               itemBuilder: (context, index) {
-                final DatosEtapa etapa = _listaEtapas[index];
+                final EtapaCultivo etapa = _etapas[index];
 
                 return Stack(
                   fit: StackFit.expand,
                   children: [
                     // Capa de fondo: Imagen de la maceta correspondiente a la etapa
                     Image.asset(
-                      etapa.rutaFondo,
+                      RutasImagenes.fondo(carpeta, etapa.clave),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           Container(color: const Color(0xFF131A15)),
@@ -192,18 +119,29 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                                 // Espacio superior para que el cartel no choque con la flecha de regreso
                                 const SizedBox(height: 10.0),
 
-                                // Cartel de madera con clamp en dimensiones
+                                // Cartel de madera con clamp en dimensiones.
+                                // Si el cultivo aún no tiene su letrero, muestra el nombre.
                                 Image.asset(
-                                  etapa.rutaCartel,
+                                  RutasImagenes.letrero(carpeta, etapa.clave),
                                   width: anchoCartel,
                                   fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Text(
+                                    'Etapa: ${etapa.nombre}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                 ),
 
                                 const SizedBox(height: 12),
 
                                 // Barra interactiva de pasos con AutoSizeText
                                 _BarraProgresoEtapas(
-                                  etapas: _nombresEtapas,
+                                  etapas: nombresEtapas,
                                   etapaActual: _etapaActual,
                                   alTocarEtapa: _irAEtapa,
                                 ),
@@ -213,8 +151,12 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                                 // Tarjeta 1: Requerimientos necesarios
                                 TarjetaComparacion(
                                   titulo: 'REQUERIMIENTOS\nNECESARIOS',
-                                  imagenPath: etapa.rutaIconoRequerimiento,
-                                  datos: etapa.requerimientos,
+                                  imagenPath: RutasImagenes.ilustracion(
+                                    carpeta,
+                                    etapa.clave,
+                                  ),
+                                  datos: widget.cultivo
+                                      .requerimientosEtapa(etapa),
                                   imagenALaDerecha: false,
                                 ),
 
@@ -223,9 +165,8 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                                 // Tarjeta 2: Tu suelo
                                 TarjetaComparacion(
                                   titulo: 'TU SUELO',
-                                  imagenPath:
-                                      'assets/images/follow-up/tierra.png',
-                                  datos: etapa.datosSuelo,
+                                  imagenPath: RutasImagenes.tierra,
+                                  datos: _datosSueloPendientes,
                                   imagenALaDerecha: false,
                                 ),
 

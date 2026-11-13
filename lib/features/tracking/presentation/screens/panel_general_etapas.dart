@@ -2,46 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 // Importa la pantalla de detalle que creamos antes para poder navegar a ella
 import 'detalle_etapas_cultivo.dart';
+import '../../../../core/constants/rutas_imagenes.dart';
 import '../../../../core/widgets/encabezado_personalizado.dart';
+import '../../../crops/domain/cultivo.dart';
+import '../../../crops/domain/etapa_cultivo.dart';
 
 class PanelGeneralEtapas extends StatelessWidget {
-  const PanelGeneralEtapas({super.key});
+  final Cultivo cultivo;
+
+  const PanelGeneralEtapas({super.key, required this.cultivo});
 
   @override
   Widget build(BuildContext context) {
-    // Lista de datos basada exactamente en tu imagen "guia de seguimiento_2.jpg"
-    final List etapas = [
-      {
-        'titulo': '1.Siembra',
-        'descripcion': 'Comienza con semillas de calidad en tierra fértil',
-        'detalle': 'Profundidad: 1 cm | Riego: ligero',
-        'icono': 'assets/images/follow-up/s_siembra.png',
-      },
-      {
-        'titulo': '2.Germinación',
-        'descripcion': 'Cotiledones aparecen y se generan las primeras raíces',
-        'detalle': '',
-        'icono': 'assets/images/follow-up/s_germ.png',
-      },
-      {
-        'titulo': '3.Crecimiento vegetativo',
-        'descripcion': 'Crecimiento vigoroso de las primeras hojas verdaderas',
-        'detalle': 'Luz de sol: Alta | Humedad: Moderada',
-        'icono': 'assets/images/follow-up/s_creci.png',
-      },
-      {
-        'titulo': '4.Amarre del fruto',
-        'descripcion': 'Aparición de flores y los primeros frutos',
-        'detalle': '',
-        'icono': 'assets/images/follow-up/s_amarre.png',
-      },
-      {
-        'titulo': '5.Maduración',
-        'descripcion': '¡Tomates listos! Cosecha cuando se encuentren rojos.',
-        'detalle': '',
-        'icono': 'assets/images/follow-up/s_maduracion.png',
-      },
-    ];
+    // Las etapas salen del cultivo: puede haber 4 o 5 según el cultivo.
+    final List<EtapaCultivo> etapas = cultivo.etapas;
 
     final Size tamanoPantalla = MediaQuery.of(context).size;
 
@@ -54,7 +28,12 @@ class PanelGeneralEtapas extends StatelessWidget {
               .expand, // Fuerza a los hijos a expandirse a toda la pantalla
           children: [
             // 1. Imagen de fondo
-            Image.asset('assets/images/follow-up/campo.png', fit: BoxFit.cover),
+            Image.asset(
+              RutasImagenes.fondoCampo,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: const Color(0xFF131A15)),
+            ),
 
             // 2. Capa oscura para contraste
             Container(color: Colors.black.withOpacity(0.25)),
@@ -76,9 +55,8 @@ class PanelGeneralEtapas extends StatelessWidget {
                         ),
                         const SizedBox(height: 18.0),
 
-                        // En lugar de ...etapas.map((etapa) { ... })
                         ...List.generate(etapas.length, (index) {
-                          final etapa = etapas[index];
+                          final EtapaCultivo etapa = etapas[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 14.0),
                             child: GestureDetector(
@@ -87,17 +65,21 @@ class PanelGeneralEtapas extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => DetalleEtapaSeguimiento(
+                                      cultivo: cultivo,
                                       etapaInicial:
-                                          index, // Pasa 0 para Siembra, 1 para Germinación, etc.
+                                          index, // 0 = primera etapa, 1 = segunda, etc.
                                     ),
                                   ),
                                 );
                               },
                               child: _TarjetaEtapa(
-                                titulo: etapa['titulo']!,
-                                descripcion: etapa['descripcion']!,
-                                detalle: etapa['detalle']!,
-                                rutaImagen: etapa['icono']!,
+                                titulo: '${index + 1}.${etapa.nombre}',
+                                descripcion: etapa.descripcion,
+                                detalle: etapa.detalle,
+                                rutaImagen: RutasImagenes.icono(
+                                  cultivo.carpetaImagenes,
+                                  etapa.clave,
+                                ),
                                 anchoMaximo: constraints.maxWidth,
                               ),
                             ),
@@ -136,7 +118,6 @@ class _TarjetaEtapa extends StatelessWidget {
   Widget build(BuildContext context) {
     // Dimensiones proporcionales al ancho de pantalla
     final double tamanoIcono = (anchoMaximo * 0.18).clamp(60.0, 85.0);
-    // Calcula tamaños de fuente proporcionales
 
     return Container(
       width: double.infinity,
@@ -158,12 +139,22 @@ class _TarjetaEtapa extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Imagen ilustrativa de la etapa
+          // Imagen ilustrativa de la etapa.
+          // Si el cultivo aún no tiene su icono, muestra uno genérico.
           Image.asset(
             rutaImagen,
             width: tamanoIcono,
             height: tamanoIcono,
             fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => SizedBox(
+              width: tamanoIcono,
+              height: tamanoIcono,
+              child: Icon(
+                Icons.eco_rounded,
+                size: tamanoIcono * 0.6,
+                color: Colors.white54,
+              ),
+            ),
           ),
 
           const SizedBox(width: 12.0),
@@ -197,9 +188,8 @@ class _TarjetaEtapa extends StatelessWidget {
                     color: Colors.white,
                     height: 1.25,
                   ),
-                  maxLines: 3, // Fuerza a que el título entre en una sola línea
-                  minFontSize:
-                      10.0, // Si la pantalla es angosta, reducirá hasta 14px
+                  maxLines: 3,
+                  minFontSize: 10.0,
                 ),
                 if (detalle.isNotEmpty) ...[
                   const SizedBox(height: 6.0),
@@ -211,10 +201,8 @@ class _TarjetaEtapa extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                       color: Colors.white.withOpacity(0.9),
                     ),
-                    maxLines:
-                        2, // Fuerza a que el título entre en una sola línea
-                    minFontSize:
-                        9.0, // Si la pantalla es angosta, reducirá hasta 14px
+                    maxLines: 2,
+                    minFontSize: 9.0,
                   ),
                 ],
               ],
