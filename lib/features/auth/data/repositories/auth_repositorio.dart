@@ -85,8 +85,50 @@ class AuthRepositorio {
     }
   }
 
+  // 5. ACTUALIZAR PERFIL Y CONTRASEÑA
+  Future<String?> actualizarPerfilYPassword({
+    String? nuevoNombre,
+    String? nuevaPassword,
+  }) async {
+    try {
+      // 1. Obtener la sesión activa
+      final usuarioActual = _supabase.auth.currentUser;
+      if (usuarioActual == null) return 'No hay una sesión activa';
+
+      // 2. Actualizar CONTRASEÑA en la bóveda de Supabase Auth
+      if (nuevaPassword != null && nuevaPassword.trim().isNotEmpty) {
+        await _supabase.auth.updateUser(
+          UserAttributes(password: nuevaPassword.trim()),
+        );
+      }
+
+      // 3. Actualizar NOMBRE en Supabase (PostgreSQL) y en SQLite (Local)
+      if (nuevoNombre != null && nuevoNombre.trim().isNotEmpty) {
+        final nombreLimpio = nuevoNombre.trim();
+
+        // A. Nube: Actualiza tu tabla relacional pública
+        await _supabase
+            .from('usuario')
+            .update({'nombre_completo': nombreLimpio})
+            .eq('id_usuario', usuarioActual.id);
+
+        // B. Local: Actualiza la tabla 'sesion_activa' en el celular
+        await DatabaseService.instance.actualizarNombreSesionLocal(
+          nombreLimpio,
+        );
+      }
+
+      return null; // Éxito
+    } on AuthException catch (e) {
+      return e.message; // Errores de Supabase (ej. contraseña muy corta)
+    } catch (e) {
+      return 'Ocurrió un error al actualizar los datos';
+    }
+  }
+
   // 4. CERRAR SESIÓN
   Future<void> cerrarSesion() async {
     await _supabase.auth.signOut();
+    await DatabaseService.instance.cerrarSesionLocal();
   }
 }

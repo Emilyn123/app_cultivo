@@ -1,49 +1,114 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import '../../../../core/widgets/tarjeta_comparacion.dart';
 import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
+import '../../../monitor/domain/servicio_diagnostico.dart'; // Importamos el cerebro
 import '../../../../core/widgets/encabezado_personalizado.dart';
 
 class ComparacionCultivo extends StatefulWidget {
-  const ComparacionCultivo({super.key});
+  final int idCultivo;
+  // Variables que recibe desde la pantalla de Captura Manual
+  final ResultadoDiagnostico resultado;
+  final double ph;
+  final double ce;
+  final double temp;
+  final double humedad;
+
+  const ComparacionCultivo({
+    super.key,
+    required this.idCultivo,
+    required this.resultado,
+    required this.ph,
+    required this.ce,
+    required this.temp,
+    required this.humedad,
+  });
 
   @override
   State<ComparacionCultivo> createState() => _ComparacionCultivoState();
 }
 
 class _ComparacionCultivoState extends State<ComparacionCultivo> {
-  // 🟢🔴 CAMBIA ESTO PARA PROBAR LOS DOS DISEÑOS
-  // true = Muestra la alerta Verde (¡Excelente noticia!)
-  // false = Muestra la alerta Roja (Alerta de desajustes)
-  bool parametrosCumplen = false;
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
+    // El cerebro decide automáticamente qué diseño mostrar
+    final bool parametrosCumplen = widget.resultado.esApto;
+
+    // --- VARIABLES DINÁMICAS SEGÚN EL CULTIVO ---
+    // --- VARIABLES DINÁMICAS SEGÚN EL CULTIVO ---
+    String fondoPantalla = '';
+    String iconoRequerimiento = '';
+    List<String> datosRequeridos = [];
+
+    switch (widget.idCultivo) {
+      case 1: // Tomate
+        fondoPantalla = 'assets/images/comparacion/fondo_tomate.jpg';
+        iconoRequerimiento = 'assets/images/comparacion/icono_tomate.png';
+        datosRequeridos = [
+          'PH: 6.0 - 6.8',
+          'CE: 1.0 - 1.5',
+          'TEMP: 11.0 - 34.0°C',
+          'HUMEDAD: 65.0 - 85.0%',
+        ];
+        break;
+      case 2: // Frijol
+        fondoPantalla = 'assets/images/comparacion/fondo_frijol.jpg';
+        iconoRequerimiento = 'assets/images/comparacion/icono_frijol.png';
+        datosRequeridos = [
+          'PH: 6.0 - 6.8',
+          'CE: 0.8 - 1.0',
+          'TEMP: 10.0 - 15.0°C',
+          'HUMEDAD: 55.0 - 75.0%',
+        ];
+        break;
+      case 3: // Cilantro
+        fondoPantalla = 'assets/images/comparacion/fondo_cilantro.jpg';
+        iconoRequerimiento = 'assets/images/comparacion/icono_cilantro.png';
+        datosRequeridos = [
+          'PH: 5.5 - 6.8',
+          'CE: 0.8 - 1.2',
+          'TEMP: 18.0 - 25.0°C',
+          'HUMEDAD: 70.0 - 90.0%',
+        ];
+        break;
+      case 4: // Rábano
+        fondoPantalla = 'assets/images/comparacion/fondo_rabano.jpg';
+        iconoRequerimiento = 'assets/images/comparacion/icono_rabano.png';
+        datosRequeridos = [
+          'PH: 5.5 - 6.8',
+          'CE: 0.8 - 1.2',
+          'TEMP: 15.0 - 22.0°C',
+          'HUMEDAD: 70.0 - 90.0%',
+        ];
+        break;
+      default:
+        fondoPantalla = 'assets/images/comparacion/fondo_default.jpg';
+        iconoRequerimiento = 'assets/images/comparacion/icono_default.png';
+        datosRequeridos = ['PH: --', 'CE: --', 'TEMP: --', 'HUMEDAD: --'];
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1511), // Fondo oscuro
+      backgroundColor: const Color(0xFF0F1511),
       body: Stack(
         children: [
-          // 1. Imagen de la planta de fondo
+          // 1. Imagen de la planta de fondo COMPLETA
           SizedBox(
             width: double.infinity,
             height: double.infinity,
-            child: Image.asset(
-              'assets/images/comparacion.png', // Usamos tu nuevo fondo
-              fit: BoxFit.cover, // Cubre toda la pantalla
-            ),
+            child: Image.asset(fondoPantalla, fit: BoxFit.cover),
           ),
 
-          // Un pequeñísimo filtro oscuro por si las letras blancas se pierden
-          Container(color: Colors.black.withOpacity(0.2)),
+          // Filtro oscuro (Cambiado a withAlpha)
+          Container(color: Colors.black.withAlpha(51)),
 
           // 2. Contenido de la pantalla
           SafeArea(
             child: Column(
               children: [
                 // --- ENCABEZADO ---
-                const EncabezadoPersonalizado(titulo: 'Comparación'),
+                const EncabezadoPersonalizado(titulo: 'comparación'),
 
                 Expanded(
                   child: SingleChildScrollView(
@@ -52,15 +117,21 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
                     ),
                     child: Column(
                       children: [
-                        // --- ALERTA DINÁMICA (ARRIBA SI ES ROJA) ---
+                        // --- ALERTA DINÁMICA ROJA ---
                         if (!parametrosCumplen)
                           _AlertaRoja(
                             alPresionarVer: () {
+                              // Navega a los 4 cubos pasando toda la información real
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SoilDiagnosisScreen(),
+                                  builder: (context) => SoilDiagnosisScreen(
+                                    resultado: widget.resultado,
+                                    ph: widget.ph,
+                                    ce: widget.ce,
+                                    temp: widget.temp,
+                                    humedad: widget.humedad,
+                                  ),
                                 ),
                               );
                             },
@@ -68,40 +139,33 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
 
                         SizedBox(height: size.height * 0.03),
 
-                        // --- TARJETA 1: REQUERIMIENTOS ---
+                        // --- TARJETAS ---
                         TarjetaComparacion(
                           titulo: 'REQUERIMIENTOS\nNECESARIOS',
-                          imagenPath: 'assets/images/tomates.png',
-                          datos: const [
-                            'PH: 5.8 - 6.8',
-                            'CE: 2.0 a 2.2 mS/cm',
-                            'TEMP: 20 y 30°C',
-                            'HUMEDAD: 60% - 80%',
-                          ],
+                          imagenPath: iconoRequerimiento,
+                          datos: datosRequeridos,
                         ),
                         SizedBox(height: size.height * 0.03),
 
-                        // --- TARJETA 2: TU SUELO ---
                         TarjetaComparacion(
                           titulo: 'TU SUELO',
-                          imagenPath:
-                              'assets/images/tierra.png', // O una imagen de tierra
-                          imagenALaDerecha: true,
-                          datos: const [
-                            'PH: ......',
-                            'CE:......',
-                            'TEMP: .....',
-                            'HUMEDAD: .....',
+                          imagenPath: 'assets/images/tierra.png',
+                          // Ahora inyectamos los números que escribió el agricultor
+                          datos: [
+                            'PH: ${widget.ph}',
+                            'CE: ${widget.ce} dS/m',
+                            'TEMP: ${widget.temp}°C',
+                            'HUMEDAD: ${widget.humedad}%',
                           ],
                         ),
                         SizedBox(height: size.height * 0.05),
 
-                        // --- ALERTA DINÁMICA (ABAJO SI ES VERDE) ---
+                        // --- ALERTA DINÁMICA VERDE ---
                         if (parametrosCumplen)
                           _AlertaVerde(
                             alPresionarIniciar: () {
-                              // Aquí programaremos el inicio de la Etapa 1
                               print('Iniciando seguimiento');
+                              // Aquí programaremos más adelante el INSERT final de siembra activa
                             },
                           ),
 
@@ -123,10 +187,8 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
 // WIDGETS INTERNOS DE LA PANTALLA
 // =====================================================================
 
-// Molde para la Alerta Roja (Ahora con efecto cristal)
 class _AlertaRoja extends StatelessWidget {
   final VoidCallback alPresionarVer;
-
   const _AlertaRoja({required this.alPresionarVer});
 
   @override
@@ -134,21 +196,17 @@ class _AlertaRoja extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 10,
-          sigmaY: 10,
-        ), // Desenfoque del fondo
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           decoration: BoxDecoration(
-            // El color ahora tiene ".withOpacity(0.7)" para dejar ver la planta
             color: const Color(0xFF5C1111).withAlpha(178),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Colors.redAccent.withAlpha(102),
               width: 1.5,
-            ), // Borde sutil
+            ),
           ),
           child: Column(
             children: [
@@ -157,12 +215,12 @@ class _AlertaRoja extends StatelessWidget {
                 children: [
                   Image.asset('assets/images/advertencia.png', height: 35),
                   const Text(
-                    'Alerta de desajustes\n de parametros',
+                    'Alerta de desajustes de\nparametros',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 18,
                     ),
                   ),
                   Image.asset('assets/images/advertencia.png', height: 35),
@@ -195,10 +253,8 @@ class _AlertaRoja extends StatelessWidget {
   }
 }
 
-// Molde para la Alerta Verde (Ahora con efecto cristal)
 class _AlertaVerde extends StatelessWidget {
   final VoidCallback alPresionarIniciar;
-
   const _AlertaVerde({required this.alPresionarIniciar});
 
   @override
@@ -206,15 +262,11 @@ class _AlertaVerde extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 10,
-          sigmaY: 10,
-        ), // Desenfoque del fondo
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            // El color ahora tiene ".withOpacity(0.7)"
             color: const Color(0xFF2E5325).withAlpha(178),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(

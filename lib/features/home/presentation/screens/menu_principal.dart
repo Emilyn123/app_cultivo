@@ -1,12 +1,15 @@
 import 'dart:ui';
-import 'package:calidad_del_suelo/features/monitor/presentation/screens/captura_manual.dart';
+import 'dart:io';
+//import 'package:calidad_del_suelo/features/monitor/presentation/screens/captura_manual.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:calidad_del_suelo/features/profile/perfil_usuario.dart';
 import 'package:calidad_del_suelo/features/tracking/presentation/screens/mis_cultivos.dart';
 import 'package:flutter/material.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
-import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
+import '../../../../core/services/database_service.dart';
+//import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
 import '../../../../core/widgets/menu_inferior.dart';
-import '../../../profile/perfil_usuario.dart';
+//import '../../../profile/perfil_usuario.dart';
 //import '../../../tracking/presentation/screens/mis_cultivos.dart';
 
 class MenuPrincipal extends StatefulWidget {
@@ -18,6 +21,42 @@ class MenuPrincipal extends StatefulWidget {
 
 class _MenuPrincipalState extends State<MenuPrincipal> {
   int _indiceSeleccionado = 0;
+
+  String _nombreUsuario = 'Cargando...';
+  File? _imagenPerfil;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosPerfil();
+  }
+
+  Future<void> _cargarDatosPerfil() async {
+    // 1. Obtener el nombre desde SQLite (Offline)
+    final datos = await DatabaseService.instance.obtenerDatosSesion();
+    String nombre = 'Agricultor';
+
+    if (datos != null && datos['nombre_completo'] != null) {
+      // split(' ')[0] extrae únicamente la primera palabra (el primer nombre)
+      nombre = datos['nombre_completo'].toString().split(' ')[0];
+    }
+
+    // 2. Obtener la ruta de la foto guardada en el Perfil
+    final prefs = await SharedPreferences.getInstance();
+    final rutaFoto = prefs.getString('ruta_foto_perfil');
+    File? imagen;
+
+    if (rutaFoto != null && File(rutaFoto).existsSync()) {
+      imagen = File(rutaFoto);
+    }
+
+    if (mounted) {
+      setState(() {
+        _nombreUsuario = nombre;
+        _imagenPerfil = imagen;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,18 +94,24 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     children: [
                       Row(
                         children: [
-                          const CircleAvatar(
+                          CircleAvatar(
                             radius: 25,
                             backgroundColor: Colors.white24,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 30,
-                            ),
+                            backgroundImage: _imagenPerfil != null
+                                ? FileImage(_imagenPerfil!)
+                                : null,
+                            // Muestra el ícono solo si no hay imagen
+                            child: _imagenPerfil == null
+                                ? const Icon(
+                                    Icons.person,
+                                    color: Colors.white,
+                                    size: 30,
+                                  )
+                                : null,
                           ),
                           SizedBox(width: size.width * 0.03),
                           Text(
-                            'Hola, Agricultor',
+                            'Hola, $_nombreUsuario',
                             style: TextStyle(
                               fontSize: size.width * 0.06,
                               fontWeight: FontWeight.bold,
@@ -159,7 +204,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SoilDiagnosisScreen(),
+                          builder: (context) => const SeleccionCultivo(),
                         ),
                       );
                     },
@@ -190,9 +235,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             // Navegar a la pantalla de Alertas (cuando la crees)
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const CapturaManualSuelo(),
-              ),
+              MaterialPageRoute(builder: (context) => const SeleccionCultivo()),
             );
           }
           if (index == 3) {

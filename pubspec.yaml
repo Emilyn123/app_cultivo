@@ -89,6 +89,7 @@ flutter:
     - assets/images/crops/radish/icons/
     - assets/images/crops/radish/illustrations/
     - assets/images/crops/radish/signs/
+    - assets/images/comparacion/
     # y lo mismo para cilantro/ y radish/
   #   - images/a_dot_ham.jpeg
 

@@ -1,12 +1,17 @@
 import 'dart:ui';
 import 'dart:io';
+import 'package:calidad_del_suelo/features/auth/presentation/screens/iniciar_sesion.dart';
+import 'package:calidad_del_suelo/features/auth/presentation/screens/inicio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../auth/data/repositories/auth_repositorio.dart';
 import 'editar_perfil.dart'; // Importa la nueva pantalla
 import 'configuracion_notificaciones.dart'; // Importa la nueva pantalla
-import '../../core/widgets/menu_inferior.dart';
 import '../home/presentation/screens/menu_principal.dart';
 import '../tracking/presentation/screens/mis_cultivos.dart';
+import '../../core/widgets/menu_inferior.dart';
+import '../../core/services/database_service.dart';
 
 class PerfilUsuario extends StatefulWidget {
   const PerfilUsuario({super.key});
@@ -18,9 +23,43 @@ class PerfilUsuario extends StatefulWidget {
 class _PerfilUsuarioState extends State<PerfilUsuario> {
   int _indiceSeleccionado = 3;
 
-  // --
   // --- 1. INSERTA ESTA VARIABLE Y FUNCIÓN AQUÍ ---
   File? _imagenPerfil;
+
+  final AuthRepositorio _authRepositorio = AuthRepositorio();
+
+  // --- 1. NUEVAS VARIABLES ---
+  String _nombreUsuario = 'Cargando...';
+  String _correoUsuario = 'Cargando...';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarFotoGuardada(); // Carga la foto automáticamente al abrir la pantalla
+    _cargarDatosUsuario();
+  }
+
+  // --- Recuperar la foto de la memoria ---
+  Future<void> _cargarFotoGuardada() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rutaFoto = prefs.getString('ruta_foto_perfil');
+    if (rutaFoto != null && File(rutaFoto).existsSync()) {
+      setState(() {
+        _imagenPerfil = File(rutaFoto);
+      });
+    }
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    final datos = await DatabaseService.instance.obtenerDatosSesion();
+    if (datos != null && mounted) {
+      setState(() {
+        // Puedes usar split(' ')[0] si solo quieres el primer nombre, o dejarlo completo
+        _nombreUsuario = datos['nombre_completo'] ?? 'Agricultor';
+        _correoUsuario = datos['correo'] ?? 'Sin correo';
+      });
+    }
+  }
 
   Future<void> _cambiarFoto() async {
     final picker = ImagePicker();
@@ -33,6 +72,9 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
       setState(() {
         _imagenPerfil = File(imagenSeleccionada.path);
       });
+      // Guarda la ruta en la memoria interna
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ruta_foto_perfil', imagenSeleccionada.path);
     }
   }
   // ----------------------------------------------
@@ -104,7 +146,7 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
                         ),
                         SizedBox(height: size.height * 0.02),
                         Text(
-                          'Hola, Agricultor',
+                          'Hola, $_nombreUsuario',
                           style: TextStyle(
                             fontSize: size.width * 0.07,
                             fontWeight: FontWeight.bold,
@@ -112,8 +154,8 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        const Text(
-                          'agricultor@gmail.com',
+                        Text(
+                          _correoUsuario,
                           style: TextStyle(fontSize: 16, color: Colors.white70),
                         ),
                       ],
@@ -191,8 +233,26 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
                           fontSize: 18,
                         ),
                       ),
-                      onPressed: () {
-                        // Lógica de logout y retorno a login
+                      //logica del boton
+                      onPressed: () async {
+                        // 1. Mostrar indicador visual (opcional pero recomendado)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Cerrando sesión...')),
+                        );
+
+                        // 2. Ejecutar borrado local y en la nube
+                        await _authRepositorio.cerrarSesion();
+
+                        if (!context.mounted) return;
+
+                        // 3. Navegar a la pantalla inicial borrando todas las demás
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InicioAnimado(),
+                          ),
+                          (Route<dynamic> route) => false,
+                        );
                       },
                     ),
                   ),

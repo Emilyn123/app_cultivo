@@ -81,13 +81,13 @@ class TarjetaCultivoElegir extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _itemDato('PH', ph),
-                          const SizedBox(height: 2.0),
-                          _itemDato('CE', ce),
                           const SizedBox(height: 2.0),
                           _itemDato('TEMP', temp),
                           const SizedBox(height: 2.0),
                           _itemDato('HUM', hum),
+                          _itemDato('PH', ph),
+                          const SizedBox(height: 2.0),
+                          _itemDato('CE', ce),
                         ],
                       ),
 

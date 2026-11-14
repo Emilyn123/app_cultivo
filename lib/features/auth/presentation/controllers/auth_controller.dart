@@ -72,4 +72,25 @@ class AuthController extends ChangeNotifier {
 
     return error == null;
   }
+
+  // 4. Manejo del estado para Actualizar Perfil
+  Future<bool> actualizarPerfilYPassword({
+    String? nuevoNombre,
+    String? nuevaPassword,
+  }) async {
+    _cargando = true;
+    _mensajeError = null;
+    notifyListeners();
+
+    final error = await _authRepositorio.actualizarPerfilYPassword(
+      nuevoNombre: nuevoNombre,
+      nuevaPassword: nuevaPassword,
+    );
+
+    _cargando = false;
+    _mensajeError = error;
+    notifyListeners();
+
+    return error == null;
+  }
 }

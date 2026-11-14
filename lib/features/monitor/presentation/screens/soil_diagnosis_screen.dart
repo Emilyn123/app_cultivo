@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
-import '../../../crops/presentation/screens/seleccion_cultivo.dart'; // Ruta al catálogo de cultivos
+import '../../../crops/presentation/screens/seleccion_cultivo.dart';
+import '../../domain/servicio_diagnostico.dart'; // Importamos el cerebro matemático
 
 class SoilDiagnosisScreen extends StatelessWidget {
-  const SoilDiagnosisScreen({super.key});
+  // Variables que esta pantalla ahora exige recibir
+  final ResultadoDiagnostico resultado;
+  final double ph;
+  final double ce;
+  final double temp;
+  final double humedad;
+
+  const SoilDiagnosisScreen({
+    super.key,
+    required this.resultado,
+    required this.ph,
+    required this.ce,
+    required this.temp,
+    required this.humedad,
+  });
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(
-        255,
-        28,
-        41,
-        31,
-      ), // Fondo verde muy oscuro
+      backgroundColor: const Color.fromARGB(255, 28, 41, 31),
       body: SafeArea(
         child: Column(
           children: [
@@ -71,17 +81,16 @@ class SoilDiagnosisScreen extends StatelessWidget {
             ),
 
             // --- ILUSTRACIÓN CENTRAL (Tierra con brotes) ---
-            // Usaremos un emoji grande mientras conectas tu asset oficial
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 30.0),
               child: Image.asset(
-                'assets/images/hojitas.png', // Conectado a tu imagen de Drive
+                'assets/images/hojitas.png',
                 height: 100,
                 fit: BoxFit.contain,
               ),
             ),
 
-            // --- CUADRÍCULA DE MÉTRICAS (2x2) ---
+            // --- CUADRÍCULA DE MÉTRICAS (Dinámica) ---
             Expanded(
               child: GridView.count(
                 padding: EdgeInsets.symmetric(
@@ -91,35 +100,36 @@ class SoilDiagnosisScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: size.width * 0.04,
                 mainAxisSpacing: size.height * 0.02,
-                childAspectRatio: 1.1, // Hace las tarjetas casi cuadradas
-                children: const [
+                childAspectRatio: 1.1,
+                children: [
                   MetricCard(
-                    imagenPath: 'assets/images/PH.png', // Representación del pH
+                    imagenPath: 'assets/images/PH.png',
                     titulo: 'PH',
-                    valor: '4.8',
+                    valor: ph.toString(), // Inyectamos el valor real
                     alertaTexto: 'FUERA DE\nRANGO',
-                    mostrarAdvertencia: false, // Color rojo oscuro
+                    mostrarAdvertencia:
+                        !resultado.phOk, // Solo sale el logo si reprobó
                   ),
                   MetricCard(
-                    imagenPath: 'assets/images/CE.png', // Representación de CE
+                    imagenPath: 'assets/images/CE.png',
                     titulo: 'CE',
-                    valor: '1.4 Ms/cm',
+                    valor: '$ce dS/m',
                     alertaTexto: 'FUERA DE\nRANGO',
-                    mostrarAdvertencia: false,
+                    mostrarAdvertencia: !resultado.ceOk,
                   ),
                   MetricCard(
-                    imagenPath: 'assets/images/TEMPERATURA.png', // Termómetro
+                    imagenPath: 'assets/images/TEMPERATURA.png',
                     titulo: 'TEMP',
-                    valor: '22°C',
-                    alertaTexto: 'NIVEL\nBAJO',
-                    mostrarAdvertencia: false, // Color negro estándar
+                    valor: '$temp°C',
+                    alertaTexto: 'FUERA DE\nRANGO',
+                    mostrarAdvertencia: !resultado.tempOk,
                   ),
                   MetricCard(
-                    imagenPath: 'assets/images/HUMEDAD.png', // Agua/Tierra
+                    imagenPath: 'assets/images/HUMEDAD.png',
                     titulo: 'HUMEDAD',
-                    valor: '35%',
-                    alertaTexto: 'NIVEL\nBAJO',
-                    mostrarAdvertencia: false,
+                    valor: '$humedad%',
+                    alertaTexto: 'FUERA DE\nRANGO',
+                    mostrarAdvertencia: !resultado.humedadOk,
                   ),
                 ],
               ),
@@ -133,7 +143,7 @@ class SoilDiagnosisScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFA5CFA1), // Verde pálido
+                    backgroundColor: const Color(0xFFA5CFA1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -167,12 +177,11 @@ class SoilDiagnosisScreen extends StatelessWidget {
 
 // --- WIDGET PARA LAS TARJETAS DE MÉTRICAS ---
 class MetricCard extends StatelessWidget {
-  final String imagenPath; // La imagen principal
-  final String titulo; // El texto
-  final String valor; // El número leído por el sensor
-  final String alertaTexto; // Lo que dirá la alerta
-  final bool
-  mostrarAdvertencia; // true si queremos que salga el logo rojo de advertencia
+  final String imagenPath;
+  final String titulo;
+  final String valor;
+  final String alertaTexto;
+  final bool mostrarAdvertencia;
 
   const MetricCard({
     super.key,
@@ -188,7 +197,7 @@ class MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFD6DBDB), // Gris claro del cubo
+        color: const Color(0xFFD6DBDB),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -199,30 +208,25 @@ class MetricCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Imagen principal que tú le pases (la verde)
-              // Usamos Flexible para que no ocupe más espacio del que debe
               Flexible(
                 child: Image.asset(
                   imagenPath,
-                  height: 30, // Altura un poco más pequeña
+                  height: 30,
                   width: 30,
                   fit: BoxFit.contain,
                 ),
               ),
-              // 2. Imagen de advertencia condicional
               if (mostrarAdvertencia)
-                // Flexible para que los textos de alerta se ajusten
                 Flexible(
                   child: Column(
                     children: [
                       Image.asset(
                         'assets/images/advertencia.png',
-                        height: 20, // Altura un poco más pequeña
+                        height: 20,
                         width: 20,
                       ),
                       const SizedBox(height: 2),
                       FittedBox(
-                        // Encoge el texto si no cabe
                         fit: BoxFit.scaleDown,
                         child: Text(
                           alertaTexto,
@@ -242,7 +246,6 @@ class MetricCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 3. El Título que le pases
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
@@ -254,7 +257,6 @@ class MetricCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // 4. El Valor del sensor
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(

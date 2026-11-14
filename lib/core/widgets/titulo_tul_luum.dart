@@ -7,7 +7,7 @@ class TituloTulLuum extends StatelessWidget {
 
   const TituloTulLuum({
     super.key,
-    this.texto = "Tul lu'um IoT",
+    this.texto = "Tul lu'um App",
     this.tamanoFuente = 42.0,
     this.colorRelleno = const Color(0xFFE8F5E9),
   });
