@@ -164,4 +164,36 @@ class ServicioDiagnostico {
       humedadOk: humedadOk,
     );
   }
+
+  /// Motor que filtra el catálogo y devuelve SOLO los cultivos aptos para la tierra actual
+  static List<Map<String, dynamic>> recomendarAlternativas({
+    required double ph,
+    required double ce,
+    required double temp,
+    required double humedad,
+    required int idCultivoDescartado,
+  }) {
+    // 1. Traemos todos los cultivos disponibles
+    List<Map<String, dynamic>> catalogoCompleto = obtenerCatalogoCultivos();
+    List<Map<String, dynamic>> recomendados = [];
+
+    // 2. Evaluamos la tierra del usuario contra cada planta del catálogo
+    for (var cultivo in catalogoCompleto) {
+      if (cultivo['id_cultivo'] == idCultivoDescartado) continue;
+      ResultadoDiagnostico resultado = evaluarSuelo(
+        idCultivo: cultivo['id_cultivo'],
+        ph: ph,
+        ce: ce,
+        temp: temp,
+        humedad: humedad,
+      );
+
+      // 3. Si la tierra cumple con los requisitos, lo agregamos a las recomendaciones
+      if (resultado.esApto) {
+        recomendados.add(cultivo);
+      }
+    }
+
+    return recomendados;
+  }
 }

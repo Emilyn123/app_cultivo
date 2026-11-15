@@ -4,9 +4,12 @@ import '../../../../core/widgets/tarjeta_comparacion.dart';
 import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
 import '../../../monitor/domain/servicio_diagnostico.dart'; // Importamos el cerebro
 import '../../../../core/widgets/encabezado_personalizado.dart';
+import '../../data/repositories/repositorio_siembras.dart';
+import '../../../home/presentation/screens/menu_principal.dart'; // Ajusta la ruta a tu estructura
 
 class ComparacionCultivo extends StatefulWidget {
   final int idCultivo;
+  final String nombreMuestra;
   // Variables que recibe desde la pantalla de Captura Manual
   final ResultadoDiagnostico resultado;
   final double ph;
@@ -17,6 +20,7 @@ class ComparacionCultivo extends StatefulWidget {
   const ComparacionCultivo({
     super.key,
     required this.idCultivo,
+    required this.nombreMuestra,
     required this.resultado,
     required this.ph,
     required this.ce,
@@ -131,6 +135,8 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
                                     ce: widget.ce,
                                     temp: widget.temp,
                                     humedad: widget.humedad,
+                                    nombreMuestra: widget.nombreMuestra,
+                                    idCultivo: widget.idCultivo,
                                   ),
                                 ),
                               );
@@ -163,9 +169,54 @@ class _ComparacionCultivoState extends State<ComparacionCultivo> {
                         // --- ALERTA DINÁMICA VERDE ---
                         if (parametrosCumplen)
                           _AlertaVerde(
-                            alPresionarIniciar: () {
-                              print('Iniciando seguimiento');
-                              // Aquí programaremos más adelante el INSERT final de siembra activa
+                            alPresionarIniciar: () async {
+                              // Instanciamos el repositorio
+                              final repositorio = RepositorioSiembras();
+
+                              // Extraemos el nombre dinámico del cultivo según el ID
+                              String nombreSeleccionado = '';
+                              switch (widget.idCultivo) {
+                                case 1:
+                                  nombreSeleccionado = 'TOMATE ROJO';
+                                  break;
+                                case 2:
+                                  nombreSeleccionado = 'FRIJOL';
+                                  break;
+                                case 3:
+                                  nombreSeleccionado = 'CILANTRO';
+                                  break;
+                                case 4:
+                                  nombreSeleccionado = 'RABANO';
+                                  break;
+                                default:
+                                  nombreSeleccionado = 'DESCONOCIDO';
+                              }
+
+                              // Ejecutamos el registro en SQLite y Supabase
+                              await repositorio.registrarNuevaSiembra(
+                                idCultivo: widget.idCultivo,
+                                nombreCultivo: nombreSeleccionado,
+                                nombreMuestra: widget.nombreMuestra,
+                              );
+
+                              // Regresamos al usuario hasta la pantalla principal (Home)
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '¡Seguimiento iniciado con éxito!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MenuPrincipal(),
+                                  ),
+                                  (Route) => false,
+                                );
+                              }
                             },
                           ),
 

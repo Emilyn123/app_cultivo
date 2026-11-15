@@ -2,23 +2,24 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../../../../core/constants/rutas_imagenes.dart';
-import '../../data/datos_locales_siembras.dart';
-import '../../domain/siembra.dart';
+import '../../../../core/services/database_service.dart'; // <-- Base de datos local
 import 'panel_general_etapas.dart';
 import '../../../../core/widgets/menu_inferior.dart';
 import '../../../home/presentation/screens/menu_principal.dart';
 import '../../../profile/perfil_usuario.dart';
+import '../../../crops/data/catalogo_cultivos.dart';
 
-/// Lista de cultivos que el usuario está sembrando.
-/// Al tocar uno, abre la guía de seguimiento de ese cultivo.
 class MisCultivos extends StatelessWidget {
   const MisCultivos({super.key});
 
+  // Función para obtener las siembras desde SQLite
+  Future<List<Map<String, dynamic>>> _obtenerSiembrasActivas() async {
+    final db = await DatabaseService.instance.database;
+    return await db.query('active_crops', orderBy: 'started_at DESC');
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Pendiente: más adelante vendrá de Supabase (FutureBuilder).
-    final List<Siembra> siembras = DatosLocalesSiembras.siembras;
-
     final Size tamanoPantalla = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -40,92 +41,117 @@ class MisCultivos extends StatelessWidget {
             // 2. Capa oscura para contraste
             Container(color: Colors.black.withOpacity(0.25)),
 
-            // 3. Contenido
+            // 3. Contenido Principal con FutureBuilder
             SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.only(
-                      left: constraints.maxWidth * 0.04,
-                      right: constraints.maxWidth * 0.04,
-                      top: 16.0,
-                      bottom: 100.0,
-                    ),
-                    child: Column(
-                      children: [
-                        // Letrero de madera del diseño
-                        Image.asset(
-                          RutasImagenes.encabezadoSeguimiento,
-                          width: (constraints.maxWidth * 0.6).clamp(
-                            200.0,
-                            300.0,
-                          ),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Text(
-                                'Seguimiento de cultivo',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22.0,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                        ),
-                        const SizedBox(height: 18.0),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _obtenerSiembrasActivas(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.green),
+                    );
+                  }
 
-                        if (siembras.isEmpty)
-                          const _MensajeSinCultivos()
-                        else
-                          ...siembras.map(
-                            (siembra) => Padding(
-                              padding: const EdgeInsets.only(bottom: 14.0),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PanelGeneralEtapas(
-                                        cultivo: siembra.cultivo,
-                                      ),
+                  final siembras = snapshot.data ?? [];
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(
+                          left: constraints.maxWidth * 0.04,
+                          right: constraints.maxWidth * 0.04,
+                          top: 16.0,
+                          bottom: 100.0,
+                        ),
+                        child: Column(
+                          children: [
+                            // Letrero de madera del diseño
+                            Image.asset(
+                              RutasImagenes.encabezadoSeguimiento,
+                              width: (constraints.maxWidth * 0.6).clamp(
+                                200.0,
+                                300.0,
+                              ),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Text(
+                                    'Seguimiento de cultivo',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22.0,
+                                      fontWeight: FontWeight.w800,
                                     ),
-                                  );
-                                },
-                                child: _TarjetaSiembra(
-                                  siembra: siembra,
-                                  anchoMaximo: constraints.maxWidth,
+                                  ),
+                            ),
+                            const SizedBox(height: 18.0),
+
+                            if (siembras.isEmpty)
+                              const _MensajeSinCultivos()
+                            else
+                              ...siembras.map(
+                                (siembraDB) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 14.0),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // 1. Obtenemos el nombre exacto guardado en la base de datos local
+                                      String nombreGuardado =
+                                          siembraDB['crop_name'] ?? '';
+
+                                      // 2. Buscamos en el catálogo global ignorando mayúsculas/minúsculas
+                                      final cultivoEncontrado = CatalogoCultivos
+                                          .todos
+                                          .firstWhere(
+                                            (c) =>
+                                                c.nombre.toUpperCase() ==
+                                                nombreGuardado.toUpperCase(),
+                                            orElse: () => CatalogoCultivos
+                                                .todos
+                                                .first, // Respaldo por defecto
+                                          );
+
+                                      // Al tocar, navegamos al panel de etapas
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PanelGeneralEtapas(
+                                            cultivo:
+                                                cultivoEncontrado, //<-- Puedes pasarle el nombre aquí si lo necesitas
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: _TarjetaSiembra(
+                                      datosSiembra: siembraDB,
+                                      anchoMaximo: constraints.maxWidth,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      );
+                    },
                   );
                 },
               ),
             ),
-
-            // 4. Botón flotante de regreso
-            const _BotonRegreso(),
           ],
         ),
       ),
-      // 3. MENÚ INFERIOR CON LÓGICA DE NAVEGACIÓN
+      // 5. MENÚ INFERIOR CON LÓGICA DE NAVEGACIÓN
       bottomNavigationBar: MenuInferior(
         indiceSeleccionado: 1, // Estamos en "Mis Cultivos"
         alSeleccionar: (index) {
-          if (index == 1) return; // Si toca el mismo ícono, no hace nada
-
+          if (index == 1) return;
           if (index == 0) {
-            // Regresa a la pestaña Inicio
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MenuPrincipal()),
             );
           }
           if (index == 3) {
-            // Regresa a la pestaña Inicio
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const PerfilUsuario()),
@@ -137,23 +163,50 @@ class MisCultivos extends StatelessWidget {
   }
 }
 
-String _formatearFecha(DateTime f) =>
-    '${f.day.toString().padLeft(2, '0')}/'
-    '${f.month.toString().padLeft(2, '0')}/${f.year}';
+String _formatearFechaISO(String isoString) {
+  try {
+    final f = DateTime.parse(isoString);
+    return '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}/${f.year}';
+  } catch (e) {
+    return '--/--/----';
+  }
+}
 
-// Tarjeta de una siembra
+// Tarjeta dinámica de siembra conectada a SQLite
 class _TarjetaSiembra extends StatelessWidget {
-  final Siembra siembra;
+  final Map<String, dynamic> datosSiembra;
   final double anchoMaximo;
 
-  const _TarjetaSiembra({required this.siembra, required this.anchoMaximo});
+  const _TarjetaSiembra({
+    required this.datosSiembra,
+    required this.anchoMaximo,
+  });
 
   @override
   Widget build(BuildContext context) {
     final double tamanoIcono = (anchoMaximo * 0.18).clamp(60.0, 85.0);
+
+    // Extraemos los datos de la base de datos
+    final String nombreCultivo = datosSiembra['crop_name'] ?? 'Desconocido';
+    final String nombremuestra =
+        datosSiembra['nombre_muestra'] ??
+        'Sin nombre'; // <--- NUEVO: Leemos el lote
+    final String fechaISO = datosSiembra['started_at'] ?? '';
+    final int etapaActual = datosSiembra['current_stage'] ?? 1;
+
     final String infoFecha =
-        'Siembra: ${_formatearFecha(siembra.fechaSiembra)} | '
-        'Etapa Actual: ${siembra.etapaActual().nombre}';
+        'Siembra: ${_formatearFechaISO(fechaISO)} | Etapa Actual: $etapaActual';
+
+    // 2. CORRECCIÓN DE IMAGEN: Buscamos el cultivo en tu catálogo
+    final cultivoOficial = CatalogoCultivos.todos.firstWhere(
+      (c) => c.nombre.toUpperCase() == nombreCultivo.toUpperCase(),
+      orElse: () => CatalogoCultivos.todos.first,
+    );
+
+    // Determinamos qué icono usar en base al nombre
+    final String rutaImagenOficial = RutasImagenes.iconoCultivo(
+      cultivoOficial.carpetaImagenes,
+    );
 
     return Container(
       width: double.infinity,
@@ -173,9 +226,8 @@ class _TarjetaSiembra extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icono del cultivo. Si aún no existe la imagen, muestra uno genérico.
           Image.asset(
-            RutasImagenes.iconoCultivo(siembra.cultivo.carpetaImagenes),
+            rutaImagenOficial,
             width: tamanoIcono,
             height: tamanoIcono,
             fit: BoxFit.contain,
@@ -189,15 +241,13 @@ class _TarjetaSiembra extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(width: 12.0),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 AutoSizeText(
-                  siembra.nombre,
+                  nombreCultivo,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 20.0,
@@ -209,16 +259,16 @@ class _TarjetaSiembra extends StatelessWidget {
                   minFontSize: 14.0,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8.0),
+                const SizedBox(height: 4.0),
                 AutoSizeText(
-                  siembra.descripcion,
+                  'Lote: $nombremuestra', // <--- NUEVO: (Ej. Lote: Cuadrante Norte) Mostramos el terreno
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    fontSize: 15.0,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.greenAccent,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   minFontSize: 11.0,
                 ),
                 const SizedBox(height: 8.0),
@@ -242,7 +292,7 @@ class _TarjetaSiembra extends StatelessWidget {
   }
 }
 
-// Mensaje cuando el usuario todavía no tiene siembras
+// Mensaje cuando el usuario todavía no tiene siembras (MANTENIDO EXACTAMENTE IGUAL)
 class _MensajeSinCultivos extends StatelessWidget {
   const _MensajeSinCultivos();
 
@@ -257,54 +307,13 @@ class _MensajeSinCultivos extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.0),
       ),
       child: const Text(
-        'Aún no tienes cultivos en seguimiento.\n'
-        'Inicia uno desde "Nuevo Cultivo".',
+        'Aún no tienes cultivos en seguimiento.\nInicia uno desde "Nuevo Cultivo".',
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.white,
           fontSize: 14.0,
           fontWeight: FontWeight.w600,
           height: 1.3,
-        ),
-      ),
-    );
-  }
-}
-
-// Botón flotante de regreso (translúcido, igual al de la pantalla de detalle)
-class _BotonRegreso extends StatelessWidget {
-  const _BotonRegreso();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 12.0, top: 8.0),
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1.0,
-                  ),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/tarjeta_cristal.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 import '../../domain/servicio_diagnostico.dart'; // Importamos el cerebro matemático
 
@@ -9,6 +10,8 @@ class SoilDiagnosisScreen extends StatelessWidget {
   final double ce;
   final double temp;
   final double humedad;
+  final String nombreMuestra;
+  final int idCultivo;
 
   const SoilDiagnosisScreen({
     super.key,
@@ -17,6 +20,8 @@ class SoilDiagnosisScreen extends StatelessWidget {
     required this.ce,
     required this.temp,
     required this.humedad,
+    required this.nombreMuestra,
+    required this.idCultivo,
   });
 
   @override
@@ -153,7 +158,15 @@ class SoilDiagnosisScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SeleccionCultivo(),
+                        builder: (context) => SeleccionCultivo(
+                          esModoRecomendacion: true,
+                          nombreMuestraPrevio: nombreMuestra,
+                          phPrevio: ph,
+                          cePrevio: ce,
+                          tempPrevio: temp,
+                          humedadPrevio: humedad,
+                          idCultivoDescartado: idCultivo,
+                        ),
                       ),
                     );
                   },

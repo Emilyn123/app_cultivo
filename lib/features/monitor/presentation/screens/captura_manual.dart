@@ -87,11 +87,16 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
             MaterialPageRoute(
               builder: (context) => ComparacionCultivo(
                 idCultivo: widget.idCultivoEsperado,
+                nombreMuestra: widget.nombreMuestra,
                 resultado: diagnostico,
                 ph: double.parse(_phController.text.trim()),
                 ce: double.parse(_ceController.text.trim()),
                 temp: double.parse(_tempController.text.trim()),
                 humedad: double.parse(_humedadController.text.trim()),
+                /*nombreLote: widget.nombreMuestra,
+                estado: widget.estado,
+                municipio: widget.municipio,
+                localidad: widget.localidad,*/
               ),
             ),
           );

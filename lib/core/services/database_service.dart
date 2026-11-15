@@ -8,6 +8,17 @@ class DatabaseService {
 
   DatabaseService._init();
 
+  static const String _sqlActiveCrops = '''
+      CREATE TABLE IF NOT EXISTS active_crops (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_cultivo INTEGER NOT NULL,
+        crop_name TEXT NOT NULL,
+        nombre_muestra TEXT NOT NULL,
+        current_stage INTEGER DEFAULT 1,
+        started_at TEXT NOT NULL
+      )
+      ''';
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('agri_soil_local.db');
@@ -20,7 +31,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -55,6 +66,8 @@ class DatabaseService {
       sincronizado INTEGER DEFAULT 0
     )
     ''');
+
+    await db.execute(_sqlActiveCrops);
   }
 
   // MÉTODO NUEVO: Se ejecuta porque cambiamos la versión de 1 a 2
@@ -78,6 +91,10 @@ class DatabaseService {
         sincronizado INTEGER DEFAULT 0
       )
       ''');
+    }
+
+    if (oldVersion < 3) {
+      await db.execute(_sqlActiveCrops);
     }
   }
 

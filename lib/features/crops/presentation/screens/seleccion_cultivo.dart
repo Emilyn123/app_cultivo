@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/encabezado_personalizado.dart';
 import '../../../../core/widgets/tarjeta_cultivo_elegir.dart';
-// Importamos el cerebro matemático para extraer el catálogo unificado
 import '../../../monitor/domain/servicio_diagnostico.dart';
-// Importamos la pantalla que sigue en tu flujo
 import '../../../monitor/presentation/screens/registro_lote.dart';
+import '../../../crops/presentation/screens/comparacion_cultivo.dart';
 
 class SeleccionCultivo extends StatefulWidget {
-  const SeleccionCultivo({super.key});
+  // Variables opcionales para el "Modo Recomendación"
+  final bool esModoRecomendacion;
+  final String? nombreMuestraPrevio;
+  final double? phPrevio;
+  final double? cePrevio;
+  final double? tempPrevio;
+  final double? humedadPrevio;
+  final int? idCultivoDescartado;
+
+  const SeleccionCultivo({
+    super.key,
+    this.esModoRecomendacion = false,
+    this.nombreMuestraPrevio,
+    this.phPrevio,
+    this.cePrevio,
+    this.tempPrevio,
+    this.humedadPrevio,
+    this.idCultivoDescartado,
+  });
 
   @override
   State<SeleccionCultivo> createState() => _SeleccionCultivoState();
@@ -24,13 +41,18 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
 
   // Extrae el catálogo directamente desde la lógica central (servicio_diagnostico.dart)
   Future<List<Map<String, dynamic>>> _obtenerCultivos() async {
-    try {
-      // Aquí irá la futura consulta a Supabase
-      throw Exception('Usando catálogo centralizado offline');
-    } catch (e) {
-      // Regresa el catálogo extraído de tu investigación
-      return ServicioDiagnostico.obtenerCatalogoCultivos();
+    // Si venimos del diagnóstico, filtramos los cultivos aptos
+    if (widget.esModoRecomendacion) {
+      return ServicioDiagnostico.recomendarAlternativas(
+        ph: widget.phPrevio!,
+        ce: widget.cePrevio!,
+        temp: widget.tempPrevio!,
+        humedad: widget.humedadPrevio!,
+        idCultivoDescartado: widget.idCultivoDescartado!,
+      );
     }
+    // Flujo normal: Mostramos todo el catálogo
+    return ServicioDiagnostico.obtenerCatalogoCultivos();
   }
 
   @override
@@ -47,7 +69,11 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
       body: SafeArea(
         child: Column(
           children: [
-            const EncabezadoPersonalizado(titulo: 'Selecciona tu cultivo'),
+            EncabezadoPersonalizado(
+              titulo: widget.esModoRecomendacion
+                  ? 'Cultivos Recomendados'
+                  : 'Selecciona tu cultivo',
+            ),
             Expanded(
               child: FutureBuilder<List>(
                 future: _cultivosFuture,
@@ -61,9 +87,11 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'No hay cultivos disponibles',
+                        widget.esModoRecomendacion
+                            ? 'Tu tierra actual no es apta para ningún cultivo del catálogo.'
+                            : 'No hay cultivos disponibles',
                         style: TextStyle(color: Colors.white),
                       ),
                     );
@@ -95,15 +123,44 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
                         temp: cultivo['temp'],
                         hum: cultivo['hum'],
                         alPresionar: () {
-                          // Navegación al paso de registro de lote llevando el ID
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RegistroLoteScreen(
-                                idCultivoEsperado: cultivo['id_cultivo'],
+                          if (widget.esModoRecomendacion) {
+                            // SALTO INTELIGENTE: Evaluamos y mandamos directo a la Alerta Verde
+                            final diagnosticoExitoso =
+                                ServicioDiagnostico.evaluarSuelo(
+                                  idCultivo: cultivo['id_cultivo'],
+                                  ph: widget.phPrevio!,
+                                  ce: widget.cePrevio!,
+                                  temp: widget.tempPrevio!,
+                                  humedad: widget.humedadPrevio!,
+                                );
+
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ComparacionCultivo(
+                                  idCultivo: cultivo['id_cultivo'],
+                                  nombreMuestra: widget.nombreMuestraPrevio!,
+                                  resultado: diagnosticoExitoso,
+                                  ph: widget.phPrevio!,
+                                  ce: widget.cePrevio!,
+                                  temp: widget.tempPrevio!,
+                                  humedad: widget.humedadPrevio!,
+                                ),
                               ),
-                            ),
-                          );
+                              (Route<dynamic> route) => route
+                                  .isFirst, // Limpia el historial para que no vuelva al error
+                            );
+                          } else {
+                            // FLUJO NORMAL: Navegación al paso de registro de lote
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RegistroLoteScreen(
+                                  idCultivoEsperado: cultivo['id_cultivo'],
+                                ),
+                              ),
+                            );
+                          }
                         },
                       );
                     },
