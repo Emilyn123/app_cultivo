@@ -55,16 +55,35 @@ class AuthRepositorio {
 
       // Si el login en la nube fue exitoso, lo guardamos localmente en SQLite
       if (respuesta.user != null) {
+        // 1. Consultamos el nombre real del usuario en la tabla de Supabase
+        final userData = await _supabase
+            .from('usuario')
+            .select('nombre_completo')
+            .eq('id_usuario', respuesta.user!.id)
+            .maybeSingle();
+        // 👇 AGREGA ESTOS PRINTS PARA RASTREAR EL PROBLEMA 👇
+        print('--- DEBUG SUPABASE ---');
+        print('ID del usuario Auth: ${respuesta.user!.id}');
+        print('Resultado de la base de datos: $userData');
+        print('----------------------');
+
+        final nombreReal =
+            (userData != null && userData['nombre_completo'] != null)
+            ? userData['nombre_completo']
+            : 'Sin nombre';
+
         await DatabaseService.instance.guardarSesionLocal(
           respuesta.user!.id,
           correo,
-          'Agricultor', // O extraer el nombre de la DB
+          nombreReal, // O extraer el nombre de la DB
         );
       }
       return null;
     } on AuthException catch (e) {
+      print('Error de Autenticación: ${e.message}');
       return e.message;
     } catch (e) {
+      print('Error interno del código: $e');
       return 'Ocurrió un error al iniciar sesión';
     }
   }

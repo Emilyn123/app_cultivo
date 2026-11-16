@@ -199,7 +199,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       ),
                     ),
-                    textoBoton: 'Elegir cultivo',
+                    textoBoton: 'Ingresa Parametros',
                     alPresionar: () {
                       Navigator.push(
                         context,
@@ -235,7 +235,17 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             // Navegar a la pantalla de Alertas (cuando la crees)
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const SeleccionCultivo()),
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Alertas')),
+                  body: const Center(
+                    child: Text(
+                      'Pantalla en construcción 🚧',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+              ),
             );
           }
           if (index == 3) {

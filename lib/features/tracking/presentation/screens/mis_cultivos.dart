@@ -151,6 +151,23 @@ class MisCultivos extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const MenuPrincipal()),
             );
           }
+          if (index == 2) {
+            // Navegar a la pantalla de Alertas (cuando la crees)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Alertas')),
+                  body: const Center(
+                    child: Text(
+                      'Pantalla en construcción 🚧',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
           if (index == 3) {
             Navigator.pushReplacement(
               context,
