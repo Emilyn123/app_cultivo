@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/widgets/tarjeta_cristal.dart'; // Ajusta la ruta
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/constants/rutas_imagenes.dart';
+import '../../../../core/widgets/encabezado_personalizado.dart';
 
 class ConfiguracionNotificaciones extends StatefulWidget {
   const ConfiguracionNotificaciones({super.key});
@@ -11,88 +13,174 @@ class ConfiguracionNotificaciones extends StatefulWidget {
 
 class _ConfiguracionNotificacionesState
     extends State<ConfiguracionNotificaciones> {
-  bool _alertasRiego = true;
-  bool _alertasNutrientes = true;
-  bool _alertasClima = false;
+  bool _alertaLluvia = true;
+  bool _alertaCalor = true;
+  bool _alertaFrio = true;
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPreferencias();
+  }
+
+  Future<void> _cargarPreferencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _alertaLluvia = prefs.getBool('alerta_lluvia') ?? true;
+        _alertaCalor = prefs.getBool('alerta_calor') ?? true;
+        _alertaFrio = prefs.getBool('alerta_frio') ?? true;
+        _cargando = false;
+      });
+    }
+  }
+
+  Future<void> _guardarPreferencia(String clave, bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(clave, valor);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notificaciones',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: const Color(0xFF0F1E12),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Image.asset('assets/images/fondo.png', fit: BoxFit.cover),
+          Image.asset(
+            RutasImagenes.fondoCampo,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                Container(color: const Color(0xFF0F1E12)),
           ),
-          Container(color: Colors.black.withAlpha(120)),
+          Container(color: Colors.black.withOpacity(0.50)),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: TarjetaCristal(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SwitchListTile(
-                      title: const Text(
-                        'Alertas de Riego',
-                        style: TextStyle(color: Colors.white),
+            child: _cargando
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.greenAccent),
+                  )
+                : Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.04,
+                          vertical: 12.0,
+                        ),
+                        child: const EncabezadoPersonalizado(
+                          titulo: 'Configurar Alertas',
+                        ),
                       ),
-                      subtitle: const Text(
-                        'Notificar cuando la humedad sea baja',
-                        style: TextStyle(color: Colors.white70),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.05,
+                          vertical: 8.0,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF223521).withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.15),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SwitchListTile(
+                                secondary: const Icon(
+                                  Icons.water_drop,
+                                  color: Colors.lightBlueAccent,
+                                ),
+                                title: const Text(
+                                  'Alertas de Lluvia',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Avisar si hay alta probabilidad de lluvia',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                                activeThumbColor: Colors.greenAccent,
+                                value: _alertaLluvia,
+                                onChanged: (val) {
+                                  setState(() => _alertaLluvia = val);
+                                  _guardarPreferencia('alerta_lluvia', val);
+                                },
+                              ),
+                              Divider(
+                                height: 1,
+                                color: Colors.white.withOpacity(0.12),
+                              ),
+                              SwitchListTile(
+                                secondary: const Icon(
+                                  Icons.wb_sunny,
+                                  color: Colors.orangeAccent,
+                                ),
+                                title: const Text(
+                                  'Alertas de Calor',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Avisar si la temperatura es muy alta',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                                activeThumbColor: Colors.greenAccent,
+                                value: _alertaCalor,
+                                onChanged: (val) {
+                                  setState(() => _alertaCalor = val);
+                                  _guardarPreferencia('alerta_calor', val);
+                                },
+                              ),
+                              Divider(
+                                height: 1,
+                                color: Colors.white.withOpacity(0.12),
+                              ),
+                              SwitchListTile(
+                                secondary: const Icon(
+                                  Icons.ac_unit,
+                                  color: Colors.cyanAccent,
+                                ),
+                                title: const Text(
+                                  'Alertas de Frío',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Avisar si hay descenso brusco de temperatura',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                                activeThumbColor: Colors.greenAccent,
+                                value: _alertaFrio,
+                                onChanged: (val) {
+                                  setState(() => _alertaFrio = val);
+                                  _guardarPreferencia('alerta_frio', val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      activeColor: Colors.greenAccent,
-                      value: _alertasRiego,
-                      onChanged: (bool value) =>
-                          setState(() => _alertasRiego = value),
-                    ),
-                    SwitchListTile(
-                      title: const Text(
-                        'Alertas de Nutrientes (PH/CE)',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      subtitle: const Text(
-                        'Desajustes en la calidad del suelo',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      activeColor: Colors.greenAccent,
-                      value: _alertasNutrientes,
-                      onChanged: (bool value) =>
-                          setState(() => _alertasNutrientes = value),
-                    ),
-                    SwitchListTile(
-                      title: const Text(
-                        'Alertas de Temperatura',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      subtitle: const Text(
-                        'Notificar si hace demasiado calor/frío',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      activeColor: Colors.greenAccent,
-                      value: _alertasClima,
-                      onChanged: (bool value) =>
-                          setState(() => _alertasClima = value),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                    ],
+                  ),
           ),
         ],
       ),

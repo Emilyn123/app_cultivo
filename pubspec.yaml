@@ -46,6 +46,9 @@ dependencies:
   auto_size_text: ^3.0.0
   image_picker: ^1.2.2
 
+  pdf: ^3.11.1
+  printing: ^5.13.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -73,6 +76,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/common/
+    - assets/images/plagas/
     - assets/images/crops/tomato/signs/
     - assets/images/crops/tomato/backgrounds/
     - assets/images/crops/tomato/icons/

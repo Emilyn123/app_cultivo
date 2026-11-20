@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'iniciar_sesion.dart';
 import '../../../../core/widgets/titulo_tul_luum.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../home/presentation/screens/menu_principal.dart';
 import '../../../../core/services/database_service.dart';
 

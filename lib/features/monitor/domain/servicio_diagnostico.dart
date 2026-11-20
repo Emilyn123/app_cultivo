@@ -122,24 +122,28 @@ class ServicioDiagnostico {
     bool ceOk = ce >= planta['minCe'] && ce <= planta['maxCe'];
 
     List<String> alertas = [];
-    if (!tempOk)
+    if (!tempOk) {
       alertas.add(
         temp > planta['maxTemp'] ? 'Estrés por calor' : 'Temperatura baja',
       );
-    if (!humedadOk)
+    }
+    if (!humedadOk) {
       alertas.add(
         humedad < planta['minHum'] ? 'Suelo muy seco' : 'Exceso de humedad',
       );
-    if (!phOk)
+    }
+    if (!phOk) {
       alertas.add(
         ph < planta['minPh']
             ? 'Suelo demasiado ácido'
             : 'Suelo demasiado alcalino',
       );
-    if (!ceOk)
+    }
+    if (!ceOk) {
       alertas.add(
         ce > planta['maxCe'] ? 'Alta salinidad' : 'Baja conductividad',
       );
+    }
 
     return ResultadoDiagnostico(
       esApto: alertas.isEmpty,

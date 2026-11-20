@@ -151,6 +151,12 @@ class DatabaseService {
     return null;
   }
 
+  // Método para obtener todas las siembras activas del usuario
+  Future<List<Map<String, dynamic>>> obtenerSiembrasActivas() async {
+    final db = await instance.database;
+    return await db.query('active_crops', orderBy: 'id DESC');
+  }
+
   // Método para borrar la sesión local al cerrar sesión
   Future<void> cerrarSesionLocal() async {
     final db = await instance.database;

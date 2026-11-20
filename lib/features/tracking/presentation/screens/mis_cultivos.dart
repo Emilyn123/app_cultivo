@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:calidad_del_suelo/features/alertas/presentation/screens/alertas_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../../../../core/constants/rutas_imagenes.dart';
@@ -181,17 +181,7 @@ class MisCultivos extends StatelessWidget {
           if (index == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(title: const Text('Alertas')),
-                  body: const Center(
-                    child: Text(
-                      'Pantalla en construcción 🚧',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-              ),
+              MaterialPageRoute(builder: (context) => const AlertasScreen()),
             );
           }
           if (index == 3) {

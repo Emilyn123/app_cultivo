@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'dart:io';
-//import 'package:calidad_del_suelo/features/monitor/presentation/screens/captura_manual.dart';
 import 'package:calidad_del_suelo/features/monitor/presentation/screens/registro_lote.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:calidad_del_suelo/features/profile/perfil_usuario.dart';
@@ -8,10 +7,11 @@ import 'package:calidad_del_suelo/features/tracking/presentation/screens/mis_cul
 import 'package:flutter/material.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 import '../../../../core/services/database_service.dart';
-//import '../../../monitor/presentation/screens/soil_diagnosis_screen.dart';
 import '../../../../core/widgets/menu_inferior.dart';
-//import '../../../profile/perfil_usuario.dart';
-//import '../../../tracking/presentation/screens/mis_cultivos.dart';
+import '../../../plagas/presentation/screens/bitacora_plagas_screen.dart';
+import '../../../fertilizacion/presentation/screens/bitacora_fertilizacion_screen.dart';
+import '../../../alertas/presentation/screens/alertas_screen.dart';
+import '../../../reports/presentation/screens/exportar_reporte_screen.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
@@ -211,6 +211,71 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     },
                   ),
                   SizedBox(height: size.height * 0.03),
+
+                  // --- TARJETA 4: Bitácora de Plagas (Nueva) ---
+                  _TarjetaMenuCristalVerde(
+                    titulo: 'Bitácora de Plagas',
+                    iconoTitulo: Icons.bug_report_outlined, // Ícono de insecto
+                    descripcion:
+                        'Identifica plagas comunes, revisa sus causas y mantén un registro visual de tu cultivo.',
+                    textoBoton: 'Ver Catalogo',
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BitacoraPlagasScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: size.height * 0.02),
+
+                  // ---TARJETA 5: Fertilizacion foliar
+                  _TarjetaMenuCristalVerde(
+                    titulo: 'Fertilización Foliar',
+                    iconoTitulo: Icons.science_outlined,
+                    descripcion:
+                        'Lleva un control de los fertilizantes y humus aplicados, con fecha y cantidades.',
+                    textoBoton: 'Abrir Bitácora',
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const BitacoraFertilizacionScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: size.height * 0.02),
+
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExportarReporteScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                    label: const Text(
+                      'Exportar Reporte PDF',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: size.height * 0.03),
                 ],
               ),
             ),
@@ -229,24 +294,14 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             // Navegar a la pantalla de Mis Cultivos (Panel General)
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => MisCultivos()),
+              MaterialPageRoute(builder: (context) => const MisCultivos()),
             );
           }
           if (index == 2) {
             // Navegar a la pantalla de Alertas (cuando la crees)
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(title: const Text('Alertas')),
-                  body: const Center(
-                    child: Text(
-                      'Pantalla en construcción 🚧',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-              ),
+              MaterialPageRoute(builder: (context) => const AlertasScreen()),
             );
           }
           if (index == 3) {

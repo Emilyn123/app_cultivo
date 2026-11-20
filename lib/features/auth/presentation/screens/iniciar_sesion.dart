@@ -7,7 +7,6 @@ import '../../../../core/widgets/campo_texto.dart'; // Si usas el campo de texto
 import '../../../../core/widgets/titulo_tul_luum.dart'; // Si usas el título animado
 import '../../../../core/services/database_service.dart';
 import '../../../home/presentation/screens/menu_principal.dart'; //dashboard
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class IniciarSesion extends StatefulWidget {
   const IniciarSesion({super.key});

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:io';
 //import 'package:calidad_del_suelo/features/auth/presentation/screens/iniciar_sesion.dart';
+import 'package:calidad_del_suelo/features/alertas/presentation/screens/alertas_screen.dart';
 import 'package:calidad_del_suelo/features/auth/presentation/screens/inicio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +13,7 @@ import '../home/presentation/screens/menu_principal.dart';
 import '../tracking/presentation/screens/mis_cultivos.dart';
 import '../../core/widgets/menu_inferior.dart';
 import '../../core/services/database_service.dart';
+import '../weather/data/weather_service.dart';
 
 class PerfilUsuario extends StatefulWidget {
   const PerfilUsuario({super.key});
@@ -22,6 +24,9 @@ class PerfilUsuario extends StatefulWidget {
 
 class _PerfilUsuarioState extends State<PerfilUsuario> {
   //int _indiceSeleccionado = 3;
+  int _cultivosActivosCount = 0;
+  int _alertasActivasCount = 0;
+  int _diasEnLaApp = 1;
 
   // --- 1. INSERTA ESTA VARIABLE Y FUNCIÓN AQUÍ ---
   File? _imagenPerfil;
@@ -37,6 +42,64 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
     super.initState();
     _cargarFotoGuardada(); // Carga la foto automáticamente al abrir la pantalla
     _cargarDatosUsuario();
+    _cargarEstadisticasPerfil();
+  }
+
+  Future<void> _cargarEstadisticasPerfil() async {
+    try {
+      final db = await DatabaseService.instance.database;
+
+      // A) Contar Cultivos Activos reales desde SQLite
+      final siembras = await db.query('active_crops');
+      final int totalCultivos = siembras.length;
+
+      // B) Calcular Días en la App desde la sesión/registro local
+      int diasCalculados = 1;
+      final sesion = await db.query('sesion_activa', limit: 1);
+      if (sesion.isNotEmpty) {
+        final fechaRaw =
+            sesion.first['fecha_registro']?.toString() ??
+            sesion.first['created_at']?.toString();
+        if (fechaRaw != null) {
+          final fechaInicio = DateTime.tryParse(fechaRaw);
+          if (fechaInicio != null) {
+            final diferencia = DateTime.now().difference(fechaInicio).inDays;
+            diasCalculados = diferencia < 1 ? 1 : diferencia;
+          }
+        }
+      }
+
+      // C) Contar Alertas Activas reales del clima y siembras
+      int totalAlertas = 0;
+      final clima = await WeatherService().obtenerClima(
+        WeatherService.defaultLat,
+        WeatherService.defaultLon,
+      );
+      if (clima != null) {
+        for (var dia in clima.pronostico) {
+          if (dia.probabilidadLluvia > 70) totalAlertas++;
+          if (dia.tempMax > 35) totalAlertas++;
+          if (dia.tempMin < 10) totalAlertas++;
+        }
+        if (clima.pronostico.length > 1) {
+          final manana = clima.pronostico[1];
+          for (var _ in siembras) {
+            if (manana.tempMax > 32) totalAlertas++;
+            if (manana.probabilidadLluvia > 60) totalAlertas++;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _cultivosActivosCount = totalCultivos;
+          _diasEnLaApp = diasCalculados;
+          _alertasActivasCount = totalAlertas;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error cargando estadísticas de perfil: $e');
+    }
   }
 
   // --- Recuperar la foto de la memoria ---
@@ -164,7 +227,12 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
                   SizedBox(height: size.height * 0.04),
 
                   // --- ESTADÍSTICAS RÁPIDAS ---
-                  _TarjetaEstadisticasCristal(size: size),
+                  _TarjetaEstadisticasCristal(
+                    size: size,
+                    cultivosActivos: _cultivosActivosCount,
+                    alertasActivas: _alertasActivasCount,
+                    diasEnLaApp: _diasEnLaApp,
+                  ),
                   SizedBox(height: size.height * 0.04),
 
                   // --- LISTA DE OPCIONES ---
@@ -274,10 +342,17 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
               context,
               MaterialPageRoute(builder: (context) => const MenuPrincipal()),
             );
-          } else if (index == 1) {
+          }
+          if (index == 1) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MisCultivos()),
+            );
+          }
+          if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AlertasScreen()),
             );
           }
           // Agrega el index 2 para Alertas cuando tengas esa pantalla
@@ -290,7 +365,16 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
 // Widgets internos
 class _TarjetaEstadisticasCristal extends StatelessWidget {
   final Size size;
-  const _TarjetaEstadisticasCristal({required this.size});
+  final int cultivosActivos;
+  final int alertasActivas;
+  final int diasEnLaApp;
+
+  const _TarjetaEstadisticasCristal({
+    required this.size,
+    required this.cultivosActivos,
+    required this.alertasActivas,
+    required this.diasEnLaApp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -308,11 +392,17 @@ class _TarjetaEstadisticasCristal extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              const _Estadistica(valor: '4', etiqueta: 'Cultivos\nActivos'),
+              _Estadistica(
+                valor: '$cultivosActivos',
+                etiqueta: 'Cultivos\nActivos',
+              ),
               Container(height: 40, width: 1, color: Colors.white30),
-              const _Estadistica(valor: '12', etiqueta: 'Alertas\nResueltas'),
+              _Estadistica(
+                valor: '$alertasActivas',
+                etiqueta: 'Alertas\nActivas',
+              ),
               Container(height: 40, width: 1, color: Colors.white30),
-              const _Estadistica(valor: '45', etiqueta: 'Días\nen la app'),
+              _Estadistica(valor: '$diasEnLaApp', etiqueta: 'Días\nen la app'),
             ],
           ),
         ),
