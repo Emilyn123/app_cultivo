@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'dart:io';
-import 'package:calidad_del_suelo/features/auth/presentation/screens/iniciar_sesion.dart';
+//import 'package:calidad_del_suelo/features/auth/presentation/screens/iniciar_sesion.dart';
 import 'package:calidad_del_suelo/features/auth/presentation/screens/inicio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,7 +21,7 @@ class PerfilUsuario extends StatefulWidget {
 }
 
 class _PerfilUsuarioState extends State<PerfilUsuario> {
-  int _indiceSeleccionado = 3;
+  //int _indiceSeleccionado = 3;
 
   // --- 1. INSERTA ESTA VARIABLE Y FUNCIÓN AQUÍ ---
   File? _imagenPerfil;

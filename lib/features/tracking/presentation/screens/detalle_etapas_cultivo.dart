@@ -2,17 +2,19 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../../../../core/constants/rutas_imagenes.dart';
+import '../../../../core/services/database_service.dart';
 import '../../../../core/widgets/tarjeta_comparacion.dart';
-import '../../../crops/domain/cultivo.dart';
 import '../../../crops/domain/etapa_cultivo.dart';
+import '../../domain/siembra.dart';
+import '../../../monitor/presentation/screens/captura_manual.dart';
 
 class DetalleEtapaSeguimiento extends StatefulWidget {
-  final Cultivo cultivo;
+  final Siembra siembra;
   final int etapaInicial;
 
   const DetalleEtapaSeguimiento({
     super.key,
-    required this.cultivo,
+    required this.siembra,
     this.etapaInicial = 0,
   });
 
@@ -25,27 +27,68 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
   late PageController _pageController;
   late int _etapaActual;
 
-  // Pendiente: más adelante saldrá de la última lectura de suelo del usuario.
-  static const List<String> _datosSueloPendientes = [
+  // Guarda las lecturas separadas por clave de etapa ('siembra', 'germinacion', etc.)
+  Map<String, List<String>> _lecturasPorEtapa = {};
+
+  static const List<String> _datosVacios = [
     'PH: .....',
     'CE: .....',
     'TEMP: .....',
     'HUMEDAD: .....',
   ];
 
-  List<EtapaCultivo> get _etapas => widget.cultivo.etapas;
+  List<EtapaCultivo> get _etapas => widget.siembra.cultivo.etapas;
 
   @override
   void initState() {
     super.initState();
     _etapaActual = widget.etapaInicial.clamp(0, _etapas.length - 1);
     _pageController = PageController(initialPage: _etapaActual);
+    _cargarLecturasPorEtapa();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargarLecturasPorEtapa() async {
+    final db = await DatabaseService.instance.database;
+    final resultados = await db.query(
+      'registros_manuales_pendientes',
+      where: 'nombre_muestra = ?',
+      whereArgs: [widget.siembra.nombre],
+      orderBy: 'fecha_registro ASC',
+    );
+
+    final Map<String, List<String>> mapa = {};
+    for (final data in resultados) {
+      final String clave = (data['etapa_clave'] as String?) ?? 'siembra';
+      mapa[clave] = [
+        'PH: ${data['ph_medido']}',
+        'CE: ${data['ce_medida']} dS/m',
+        'TEMP: ${data['temp_medida']}°C',
+        'HUMEDAD: ${data['humedad_medida']}%',
+      ];
+    }
+
+    if (mounted) {
+      setState(() {
+        _lecturasPorEtapa = mapa;
+      });
+    }
+  }
+
+  List<String> _obtenerRequerimientosReales(EtapaCultivo etapa) {
+    final ph = widget.siembra.cultivo.ph;
+
+    return [
+      'PH: ${ph.min} - ${ph.max}',
+      'CE: ${etapa.ce.min} - ${etapa.ce.max} dS/m',
+      'TEMP: ${etapa.temperatura.min} - ${etapa.temperatura.max}°C',
+      'HUMEDAD: ${etapa.humedad.min} - ${etapa.humedad.max}%',
+    ];
   }
 
   void _irAEtapa(int indice) {
@@ -58,23 +101,20 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. MediaQuery: Consulta las dimensiones exactas del dispositivo
     final Size tamanoPantalla = MediaQuery.of(context).size;
-    final String carpeta = widget.cultivo.carpetaImagenes;
-    final List<String> nombresEtapas =
-        _etapas.map((e) => e.nombre.toUpperCase()).toList();
+    final String carpeta = widget.siembra.cultivo.carpetaImagenes;
+    final List<String> nombresEtapas = _etapas
+        .map((e) => e.nombre.toUpperCase())
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.black,
-      // 2. SizedBox: Asegura que el contenedor abarque el 100% de la pantalla
       body: SizedBox(
         width: tamanoPantalla.width,
         height: tamanoPantalla.height,
-        // 3. Stack con fit: StackFit.expand: Fuerza a las capas a expandirse por completo
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // PageView que permite deslizar entre las etapas
             PageView.builder(
               controller: _pageController,
               itemCount: _etapas.length,
@@ -89,22 +129,16 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Capa de fondo: Imagen de la maceta correspondiente a la etapa
                     Image.asset(
                       RutasImagenes.fondo(carpeta, etapa.clave),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           Container(color: const Color(0xFF131A15)),
                     ),
-
-                    // Capa de contraste oscura
                     Container(color: Colors.black.withOpacity(0.35)),
-
-                    // Capa de contenido desplazable
                     SafeArea(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          // Uso de clamp en el ancho del cartel colgante
                           final double anchoCartel =
                               (constraints.maxWidth * 0.52).clamp(160.0, 240.0);
 
@@ -116,61 +150,124 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                             ),
                             child: Column(
                               children: [
-                                // Espacio superior para que el cartel no choque con la flecha de regreso
                                 const SizedBox(height: 10.0),
-
-                                // Cartel de madera con clamp en dimensiones.
-                                // Si el cultivo aún no tiene su letrero, muestra el nombre.
                                 Image.asset(
                                   RutasImagenes.letrero(carpeta, etapa.clave),
                                   width: anchoCartel,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Text(
-                                    'Etapa: ${etapa.nombre}',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
+                                        'Etapa: ${etapa.nombre}',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
                                 ),
-
                                 const SizedBox(height: 12),
-
-                                // Barra interactiva de pasos con AutoSizeText
                                 _BarraProgresoEtapas(
                                   etapas: nombresEtapas,
                                   etapaActual: _etapaActual,
                                   alTocarEtapa: _irAEtapa,
                                 ),
-
                                 const SizedBox(height: 26),
-
-                                // Tarjeta 1: Requerimientos necesarios
                                 TarjetaComparacion(
                                   titulo: 'REQUERIMIENTOS\nNECESARIOS',
                                   imagenPath: RutasImagenes.ilustracion(
                                     carpeta,
                                     etapa.clave,
                                   ),
-                                  datos: widget.cultivo
-                                      .requerimientosEtapa(etapa),
+                                  datos: _obtenerRequerimientosReales(etapa),
                                   imagenALaDerecha: false,
                                 ),
-
                                 const SizedBox(height: 18),
-
-                                // Tarjeta 2: Tu suelo
                                 TarjetaComparacion(
                                   titulo: 'TU SUELO',
                                   imagenPath: RutasImagenes.tierra,
-                                  datos: _datosSueloPendientes,
+                                  datos:
+                                      _lecturasPorEtapa[etapa.clave] ??
+                                      _datosVacios,
                                   imagenALaDerecha: false,
                                 ),
-
                                 const SizedBox(height: 24),
+                                if (_etapaActual == 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.greenAccent.withOpacity(
+                                          0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.greenAccent,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Flexible(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'Parámetros iniciales registrados',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CapturaManualSuelo(
+                                                siembra: widget.siembra,
+                                                etapaCultivo:
+                                                    _etapas[_etapaActual],
+                                              ),
+                                        ),
+                                      );
+                                      _cargarLecturasPorEtapa();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.greenAccent.shade700,
+                                      foregroundColor: Colors.black,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 32,
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 4,
+                                    ),
+                                    child: const Text(
+                                      'VERIFICAR PARÁMETROS',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(height: 40),
                               ],
                             ),
                           );
@@ -181,7 +278,6 @@ class _DetalleEtapaSeguimientoState extends State<DetalleEtapaSeguimiento> {
                 );
               },
             ),
-            // 2. Botón flotante de regreso (diseño sutil translúcido)
             SafeArea(
               child: Align(
                 alignment: Alignment.topLeft,
@@ -240,7 +336,6 @@ class _BarraProgresoEtapas extends StatelessWidget {
 
     return Column(
       children: [
-        // Línea y círculos de conexión
         Row(
           children: List.generate(etapas.length * 2 - 1, (index) {
             if (index.isEven) {
@@ -282,8 +377,6 @@ class _BarraProgresoEtapas extends StatelessWidget {
           }),
         ),
         const SizedBox(height: 8),
-
-        // Textos inferiores con AutoSizeText
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,

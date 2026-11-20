@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/database_service.dart';
 
@@ -66,6 +67,13 @@ class AuthRepositorio {
         print('ID del usuario Auth: ${respuesta.user!.id}');
         print('Resultado de la base de datos: $userData');
         print('----------------------');
+
+        // 👇 MUESTRA REAL EN FORMATO JSON PARA EL REPORTE 👇
+        final listaUsuarios = await _supabase.from('usuario').select().limit(3);
+        const encoder = JsonEncoder.withIndent('  ');
+        print('=== MUESTRA REAL JSON ===\n${encoder.convert(listaUsuarios)}');
+
+        print('Petición HTTP GET a Supabase /rest/v1/usuario -> Status 200 OK');
 
         final nombreReal =
             (userData != null && userData['nombre_completo'] != null)

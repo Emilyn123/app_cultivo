@@ -62,7 +62,7 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
     final espaciadoColumnas = (size.width * 0.04).clamp(12.0, 18.0);
     final separacionFilas = (size.height * 0.045).clamp(28.0, 44.0);
     final int columnas = size.width > 900 ? 4 : (size.width > 600 ? 3 : 2);
-    final double proporcionAspecto = size.width > 600 ? 0.65 : 0.54;
+    final double proporcionAspecto = size.width > 600 ? 0.85 : 0.85;
 
     return Scaffold(
       backgroundColor: const Color(0xFF131E17),
@@ -118,10 +118,6 @@ class _SeleccionCultivoState extends State<SeleccionCultivo> {
                       return TarjetaCultivoElegir(
                         imagenPath: cultivo['imagenPath'],
                         nombre: cultivo['nombre'],
-                        ph: cultivo['ph'],
-                        ce: cultivo['ce'],
-                        temp: cultivo['temp'],
-                        hum: cultivo['hum'],
                         alPresionar: () {
                           if (widget.esModoRecomendacion) {
                             // SALTO INTELIGENTE: Evaluamos y mandamos directo a la Alerta Verde

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UsuarioModelo {
   final String idUsuario;
   final String nombreCompleto;
@@ -23,12 +25,18 @@ class UsuarioModelo {
     );
   }
 
+  factory UsuarioModelo.fromJson(String source) =>
+      UsuarioModelo.fromMap(jsonDecode(source) as Map<String, dynamic>);
+
   // Convierte la instancia a un Map para enviar a Supabase
   Map<String, dynamic> toMap() {
     return {
       'id_usuario': idUsuario,
       'nombre_completo': nombreCompleto,
       'correo': correo,
+      'fecha_registro': fechaRegistro?.toIso8601String(),
     };
   }
+
+  String toJson() => jsonEncode(toMap());
 }

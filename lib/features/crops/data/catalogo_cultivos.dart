@@ -48,8 +48,7 @@ class CatalogoCultivos {
   static const Cultivo _tomate = Cultivo(
     id: 'tomate',
     nombre: 'Tomate rojo',
-    carpetaImagenes:
-        'tomato', // REVISAR: debe coincidir con tu carpeta de assets
+    carpetaImagenes: 'tomato',
     ph: Rango(6.0, 6.8), // suelo (5.5 a 6.5 en hidroponía)
     etapas: [
       EtapaCultivo(
@@ -85,15 +84,13 @@ class CatalogoCultivos {
         clave: 'amarre',
         nombre: 'Amarre del fruto',
         descripcion: 'Aparecen las flores y se forman los frutos',
-        // REVISAR: valores de día. De noche: mín 10, máx 20, óptimo 13 a 18.
-        temperatura: Rango(18, 30, optMin: 19, optMax: 24),
+        temperatura: Rango(10, 30, optMin: 13, optMax: 24),
         humedad: Rango(70, 85, optMin: 75, optMax: 82),
-        // REVISAR: floración 2.5 a 3.0 y llenado del fruto 3.0 a 3.5.
         ce: Rango(2.5, 3.5),
         duracionMinDias: 25,
         duracionMaxDias: 40,
         notaTermica:
-            'Con más de 30 °C de día o 20 °C de noche hay aborto de flores.',
+            'Con más de 30 °C de día o 20 °C de noche hay aborto de flores Y Falla en el amarre.',
       ),
       EtapaCultivo(
         clave: 'maduracion',
@@ -114,16 +111,14 @@ class CatalogoCultivos {
   static const Cultivo _frijol = Cultivo(
     id: 'frijol',
     nombre: 'Frijol',
-    carpetaImagenes: 'bean', // REVISAR
+    carpetaImagenes: 'bean',
     ph: Rango(6.0, 6.8),
     etapas: [
       EtapaCultivo(
         clave: 'siembra',
         nombre: 'Siembra',
         descripcion: 'Se coloca la semilla en el suelo',
-        // REVISAR: el PDF da mín 10 / máx 15 pero óptimo 18 a 24 (se
-        // contradice). Se dejó 10 a 15 para coincidir con ServicioDiagnostico.
-        temperatura: Rango(10, 15),
+        temperatura: Rango(10, 25, optMin: 18, optMax: 24),
         humedad: Rango(55, 75, optMin: 60, optMax: 70),
         ce: Rango(0.8, 1.0),
       ),
@@ -131,7 +126,7 @@ class CatalogoCultivos {
         clave: 'germinacion',
         nombre: 'Germinación y emergencia',
         descripcion: 'La semilla brota y emerge del suelo',
-        temperatura: Rango(10, 15), // REVISAR (misma contradicción)
+        temperatura: Rango(10, 25, optMin: 18, optMax: 24),
         humedad: Rango(55, 75, optMin: 60, optMax: 70),
         ce: Rango(0.8, 1.0),
         duracionMinDias: 20,
@@ -141,8 +136,7 @@ class CatalogoCultivos {
         clave: 'crecimiento',
         nombre: 'Crecimiento vegetativo',
         descripcion: 'La planta desarrolla tallo y hojas',
-        // REVISAR: el PDF solo da "20 a 36" y el límite superior es 32.
-        temperatura: Rango(10, 32, optMin: 20, optMax: 32),
+        temperatura: Rango(10, 32, optMin: 20, optMax: 28),
         humedad: Rango(50, 70, optMin: 60, optMax: 65),
         ce: Rango(1.0, 1.2),
         duracionMinDias: 25,
@@ -154,16 +148,19 @@ class CatalogoCultivos {
         descripcion: 'Aparecen las flores y se forman las vainas',
         temperatura: Rango(10, 32, optMin: 20, optMax: 26),
         humedad: Rango(65, 85, optMin: 70, optMax: 80),
-        ce: Rango(1.2, 1.5),
+        ce: Rango(
+          1.2,
+          1.5,
+        ), // Valores superiores a 2.0 dS/m provocan aborto floral
         duracionMinDias: 30,
         duracionMaxDias: 40,
-        notaTermica: 'Arriba de 32 °C hay aborto de vainas.',
+        notaTermica: 'Arriba de 32 °C hay aborto de vainas y estrés térmico.',
       ),
       EtapaCultivo(
         clave: 'madurez',
         nombre: 'Madurez',
         descripcion: 'Las vainas maduran y se secan',
-        temperatura: Rango(10, 32), // REVISAR: el PDF solo dice "> 32 estrés"
+        temperatura: Rango(10, 32, optMin: 20, optMax: 30),
         humedad: Rango(40, 60, optMin: 45, optMax: 55),
         ce: Rango(1.0, 1.2),
         duracionMinDias: 15,
@@ -178,15 +175,14 @@ class CatalogoCultivos {
   static const Cultivo _cilantro = Cultivo(
     id: 'cilantro',
     nombre: 'Cilantro',
-    carpetaImagenes: 'cilantro', // REVISAR
+    carpetaImagenes: 'cilantro',
     ph: Rango(5.5, 6.8, optMin: 5.8, optMax: 6.5),
     etapas: [
       EtapaCultivo(
         clave: 'siembra',
         nombre: 'Siembra',
         descripcion: 'Se coloca la semilla en el suelo',
-        // REVISAR: el PDF da mín 18 / máx 25 pero óptimo 12 a 18.
-        temperatura: Rango(18, 25),
+        temperatura: Rango(10, 25, optMin: 12, optMax: 18),
         humedad: Rango(70, 90, optMin: 75, optMax: 85),
         ce: Rango(0.8, 1.2),
       ),
@@ -194,28 +190,17 @@ class CatalogoCultivos {
         clave: 'germinacion',
         nombre: 'Germinación',
         descripcion: 'La semilla brota en el suelo',
-        temperatura: Rango(18, 25), // REVISAR (misma contradicción)
+        temperatura: Rango(10, 25, optMin: 12, optMax: 18),
         humedad: Rango(70, 90, optMin: 75, optMax: 85),
         ce: Rango(0.8, 1.2),
         duracionMinDias: 4,
         duracionMaxDias: 8,
       ),
       EtapaCultivo(
-        clave: 'emergencia',
-        nombre: 'Emergencia y establecimiento',
-        descripcion: 'Las plántulas se establecen en el suelo',
-        temperatura: Rango(13, 20, optMin: 18, optMax: 20),
-        humedad: Rango(65, 80, optMin: 70, optMax: 75),
-        ce: Rango(1.2, 1.5),
-        duracionMinDias: 20,
-        duracionMaxDias: 25,
-      ),
-      EtapaCultivo(
         clave: 'desarrollo',
         nombre: 'Desarrollo vegetativo',
         descripcion: 'La planta forma sus hojas',
-        // REVISAR: el PDF dice 18 a 20 y "evitar más de 24".
-        temperatura: Rango(18, 24, optMin: 18, optMax: 20),
+        temperatura: Rango(15, 28, optMin: 18, optMax: 20),
         humedad: Rango(60, 75, optMin: 65, optMax: 70),
         ce: Rango(1.5, 2.5),
         duracionMinDias: 25,
@@ -223,20 +208,10 @@ class CatalogoCultivos {
         notaTermica: 'El calor de Yucatán provoca espigamiento anticipado.',
       ),
       EtapaCultivo(
-        clave: 'floracion',
-        nombre: 'Floración',
-        descripcion: 'La planta echa flores',
-        temperatura: Rango(25, 28),
-        humedad: Rango(55, 70, optMin: 60, optMax: 65),
-        ce: Rango(2.0, 2.8),
-        duracionMinDias: 14,
-        duracionMaxDias: 21,
-      ),
-      EtapaCultivo(
         clave: 'maduracion',
         nombre: 'Maduración de semillas',
         descripcion: 'Las semillas maduran',
-        temperatura: Rango(25, 30), // REVISAR: el PDF solo da máx 30
+        temperatura: Rango(20, 32, optMin: 25, optMax: 30),
         humedad: Rango(45, 60, optMin: 50, optMax: 55),
         ce: Rango(2.0, 2.8),
         duracionMinDias: 20,
@@ -258,7 +233,7 @@ class CatalogoCultivos {
         clave: 'siembra',
         nombre: 'Siembra',
         descripcion: 'Se coloca la semilla en el suelo',
-        temperatura: Rango(15, 22),
+        temperatura: Rango(10, 25, optMin: 15, optMax: 22),
         humedad: Rango(70, 90, optMin: 75, optMax: 85),
         ce: Rango(0.8, 1.2),
       ),
@@ -266,7 +241,7 @@ class CatalogoCultivos {
         clave: 'germinacion',
         nombre: 'Germinación y emergencia',
         descripcion: 'La semilla brota y emerge del suelo',
-        temperatura: Rango(15, 22),
+        temperatura: Rango(10, 25, optMin: 15, optMax: 22),
         humedad: Rango(70, 90, optMin: 75, optMax: 85),
         ce: Rango(0.8, 1.2),
         duracionMinDias: 5,
@@ -276,7 +251,7 @@ class CatalogoCultivos {
         clave: 'crecimiento',
         nombre: 'Crecimiento vegetativo',
         descripcion: 'La planta desarrolla sus hojas',
-        temperatura: Rango(15, 20),
+        temperatura: Rango(10, 25, optMin: 15, optMax: 20),
         humedad: Rango(65, 80, optMin: 70, optMax: 75),
         ce: Rango(1.2, 1.5),
         duracionMinDias: 7,
@@ -286,22 +261,24 @@ class CatalogoCultivos {
         clave: 'engrosamiento',
         nombre: 'Engrosamiento de la raíz',
         descripcion: 'La raíz crece y se engrosa',
-        temperatura: Rango(15, 20),
+        temperatura: Rango(10, 30, optMin: 15, optMax: 22),
         humedad: Rango(70, 85, optMin: 75, optMax: 80),
         ce: Rango(1.8, 2.0),
         duracionMinDias: 10,
         duracionMaxDias: 12,
-        notaTermica: 'Arriba de 25 °C la raíz se vuelve leñosa.',
+        notaTermica:
+            'Temperaturas superiores de 25 a 30 °C aumentan el estrés y hacen que la raíz sea leñosa o picante.',
       ),
       EtapaCultivo(
         clave: 'madurez',
         nombre: 'Madurez',
         descripcion: 'La raíz está lista para cosecha',
-        temperatura: Rango(15, 30), // REVISAR: el PDF solo da máx 30
+        temperatura: Rango(10, 30, optMin: 15, optMax: 22),
         humedad: Rango(55, 70, optMin: 60, optMax: 65),
         ce: Rango(1.5, 1.8),
         duracionMinDias: 3,
         duracionMaxDias: 5,
+        notaTermica: 'Evita la senescencia o el ahuecado de la raíz.',
       ),
     ],
   );

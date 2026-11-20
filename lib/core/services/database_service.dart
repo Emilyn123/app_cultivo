@@ -31,7 +31,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -63,6 +63,7 @@ class DatabaseService {
       temp_medida REAL NOT NULL,
       ce_medida REAL NOT NULL,
       fecha_registro TEXT NOT NULL,
+      etapa_clave TEXT,
       sincronizado INTEGER DEFAULT 0
     )
     ''');
@@ -95,6 +96,12 @@ class DatabaseService {
 
     if (oldVersion < 3) {
       await db.execute(_sqlActiveCrops);
+    }
+
+    if (oldVersion < 5) {
+      await db.execute(
+        'ALTER TABLE registros_manuales_pendientes ADD COLUMN etapa_clave TEXT',
+      );
     }
   }
 

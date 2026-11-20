@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-// Importa la pantalla de detalle que creamos antes para poder navegar a ella
 import 'detalle_etapas_cultivo.dart';
 import '../../../../core/constants/rutas_imagenes.dart';
 import '../../../../core/widgets/encabezado_personalizado.dart';
 import '../../../crops/domain/cultivo.dart';
 import '../../../crops/domain/etapa_cultivo.dart';
+import '../../domain/siembra.dart';
 
 class PanelGeneralEtapas extends StatelessWidget {
-  final Cultivo cultivo;
+  final Siembra siembra;
 
-  const PanelGeneralEtapas({super.key, required this.cultivo});
+  const PanelGeneralEtapas({super.key, required this.siembra});
 
   @override
   Widget build(BuildContext context) {
-    // Las etapas salen del cultivo: puede haber 4 o 5 según el cultivo.
+    final Cultivo cultivo = siembra.cultivo;
     final List<EtapaCultivo> etapas = cultivo.etapas;
-
     final Size tamanoPantalla = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -24,8 +23,7 @@ class PanelGeneralEtapas extends StatelessWidget {
         width: tamanoPantalla.width,
         height: tamanoPantalla.height,
         child: Stack(
-          fit: StackFit
-              .expand, // Fuerza a los hijos a expandirse a toda la pantalla
+          fit: StackFit.expand,
           children: [
             // 1. Imagen de fondo
             Image.asset(
@@ -50,11 +48,10 @@ class PanelGeneralEtapas extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        EncabezadoPersonalizado(
+                        const EncabezadoPersonalizado(
                           titulo: 'Guía de seguimiento del cultivo',
                         ),
                         const SizedBox(height: 18.0),
-
                         ...List.generate(etapas.length, (index) {
                           final EtapaCultivo etapa = etapas[index];
                           return Padding(
@@ -64,11 +61,11 @@ class PanelGeneralEtapas extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => DetalleEtapaSeguimiento(
-                                      cultivo: cultivo,
-                                      etapaInicial:
-                                          index, // 0 = primera etapa, 1 = segunda, etc.
-                                    ),
+                                    builder: (context) =>
+                                        DetalleEtapaSeguimiento(
+                                          siembra: siembra,
+                                          etapaInicial: index,
+                                        ),
                                   ),
                                 );
                               },
@@ -98,7 +95,6 @@ class PanelGeneralEtapas extends StatelessWidget {
   }
 }
 
-// Widget modular para cada tarjeta de etapa
 class _TarjetaEtapa extends StatelessWidget {
   final String titulo;
   final String descripcion;
@@ -116,16 +112,13 @@ class _TarjetaEtapa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dimensiones proporcionales al ancho de pantalla
     final double tamanoIcono = (anchoMaximo * 0.18).clamp(60.0, 85.0);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 14.0),
       decoration: BoxDecoration(
-        color: const Color(
-          0xFF223521,
-        ).withOpacity(0.92), // Tono verde oliva oscuro
+        color: const Color(0xFF223521).withOpacity(0.92),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.0),
         boxShadow: const [
@@ -139,8 +132,6 @@ class _TarjetaEtapa extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Imagen ilustrativa de la etapa.
-          // Si el cultivo aún no tiene su icono, muestra uno genérico.
           Image.asset(
             rutaImagen,
             width: tamanoIcono,
@@ -156,10 +147,7 @@ class _TarjetaEtapa extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(width: 12.0),
-
-          // Textos informativos de la etapa
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -173,9 +161,8 @@ class _TarjetaEtapa extends StatelessWidget {
                     color: Colors.white,
                     letterSpacing: 0.3,
                   ),
-                  maxLines: 1, // Fuerza a que el título entre en una sola línea
-                  minFontSize:
-                      14.0, // Si la pantalla es angosta, reducirá hasta 14px
+                  maxLines: 1,
+                  minFontSize: 14.0,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6.0),

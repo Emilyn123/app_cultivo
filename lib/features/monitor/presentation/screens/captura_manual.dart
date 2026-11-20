@@ -1,27 +1,32 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-//import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/widgets/encabezado_personalizado.dart';
 import '../../../../core/services/database_service.dart';
 import '../../domain/servicio_diagnostico.dart';
 import '../../../crops/presentation/screens/comparacion_cultivo.dart';
+import 'resultados_recomendacion.dart';
+import '../../../tracking/domain/siembra.dart';
+import '../../../crops/domain/etapa_cultivo.dart';
 
 class CapturaManualSuelo extends StatefulWidget {
-  // Variables que recibe de la pantalla RegistroLoteScreen
-  final int idCultivoEsperado;
-  final String nombreMuestra;
-  final String estado;
-  final String municipio;
-  final String localidad;
+  final int? idCultivoEsperado;
+  final String? nombreMuestra;
+  final String? estado;
+  final String? municipio;
+  final String? localidad;
+  final Siembra? siembra;
+  final EtapaCultivo? etapaCultivo;
 
   const CapturaManualSuelo({
     super.key,
-    required this.idCultivoEsperado,
-    required this.nombreMuestra,
-    required this.estado,
-    required this.municipio,
-    required this.localidad,
+    this.idCultivoEsperado,
+    this.nombreMuestra,
+    this.estado,
+    this.municipio,
+    this.localidad,
+    this.siembra,
+    this.etapaCultivo,
   });
 
   @override
@@ -30,41 +35,183 @@ class CapturaManualSuelo extends StatefulWidget {
 
 class _CapturaManualSueloState extends State<CapturaManualSuelo> {
   final _formKey = GlobalKey<FormState>();
-  //final SupabaseClient _supabase = Supabase.instance.client;
   bool _estaGuardando = false;
 
-  // Controladores para los 4 parámetros físicos
   final TextEditingController _phController = TextEditingController();
   final TextEditingController _humedadController = TextEditingController();
   final TextEditingController _tempController = TextEditingController();
   final TextEditingController _ceController = TextEditingController();
+
+  void _mostrarDialogoResultado(
+    BuildContext context,
+    String titulo,
+    String mensaje,
+    bool esExito,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B3B22).withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: esExito
+                        ? Colors.greenAccent.withOpacity(0.5)
+                        : Colors.redAccent.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            titulo,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () {
+                            Navigator.pop(context); // 1. Cierra el diálogo
+                            Navigator.pop(
+                              context,
+                            ); // 2. Regresa a detalle_etapas
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 10),
+                    Icon(
+                      esExito
+                          ? Icons.check_circle_outline
+                          : Icons.warning_amber_rounded,
+                      color: esExito ? Colors.greenAccent : Colors.redAccent,
+                      size: 65,
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      mensaje,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _guardarOffline() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _estaGuardando = true);
 
       try {
-        // Obtenemos el ID del usuario actual logueado
         final db = await DatabaseService.instance.database;
 
-        // Inserción directa a tu tabla de hechos en Supabase
+        final double phMedido = _leerNumero(_phController);
+        final double humedadMedida = _leerNumero(_humedadController);
+        final double tempMedida = _leerNumero(_tempController);
+        final double ceMedida = _leerNumero(_ceController);
+
+        // 1. Valores por defecto o recibidos en flujo normal
+        int idCultivoFinal = widget.idCultivoEsperado ?? 0;
+        String estadoFinal = widget.estado ?? '';
+        String municipioFinal = widget.municipio ?? '';
+        String localidadFinal = widget.localidad ?? '';
+        String loteFinal =
+            widget.siembra?.nombre ?? widget.nombreMuestra ?? 'Seguimiento';
+
+        // 2. Si estamos en MODO SEGUIMIENTO, heredamos los datos originales del lote
+        if (widget.siembra != null) {
+          final lecturaAnterior = await db.query(
+            'registros_manuales_pendientes',
+            where: 'nombre_muestra = ?',
+            whereArgs: [loteFinal],
+            orderBy: 'fecha_registro ASC',
+            limit: 1,
+          );
+
+          if (lecturaAnterior.isNotEmpty) {
+            final data = lecturaAnterior.first;
+            idCultivoFinal =
+                (data['id_cultivo_esperado'] as int?) ?? idCultivoFinal;
+            estadoFinal = (data['estado'] as String?) ?? estadoFinal;
+            municipioFinal = (data['municipio'] as String?) ?? municipioFinal;
+            localidadFinal = (data['localidad'] as String?) ?? localidadFinal;
+          }
+        }
+
+        // 3. Guardado local en SQLite con etapa_clave y sin campos nulos
         await db.insert('registros_manuales_pendientes', {
-          'id_cultivo_esperado':
-              widget.idCultivoEsperado, // Dato de la pantalla 1
-          'nombre_muestra': widget.nombreMuestra, // Dato de la pantalla 2
-          'estado': widget.estado, // Dato de la pantalla 2
-          'municipio': widget.municipio, // Dato de la pantalla 2
-          'localidad': widget.localidad, // Dato de la pantalla 2
-          'ph_medido': _leerNumero(_phController),
-          'humedad_medida': _leerNumero(_humedadController),
-          'temp_medida': _leerNumero(_tempController),
-          'ce_medida': _leerNumero(_ceController),
+          'id_cultivo_esperado': idCultivoFinal,
+          'nombre_muestra': loteFinal,
+          'estado': estadoFinal,
+          'municipio': municipioFinal,
+          'localidad': localidadFinal,
+          'etapa_clave': widget.etapaCultivo?.clave ?? 'siembra',
+          'ph_medido': phMedido,
+          'humedad_medida': humedadMedida,
+          'temp_medida': tempMedida,
+          'ce_medida': ceMedida,
           'fecha_registro': DateTime.now().toIso8601String(),
           'sincronizado': 0,
         });
 
-        //
         if (mounted) {
+          // --- MODO 1: Seguimiento de Etapa ---
+          if (widget.siembra != null && widget.etapaCultivo != null) {
+            final etapa = widget.etapaCultivo!;
+            final phOptimo = widget.siembra!.cultivo.ph;
+
+            bool pasaPh = phMedido >= phOptimo.min && phMedido <= phOptimo.max;
+            bool pasaCe = ceMedida >= etapa.ce.min && ceMedida <= etapa.ce.max;
+            bool pasaTemp =
+                tempMedida >= etapa.temperatura.min &&
+                tempMedida <= etapa.temperatura.max;
+            bool pasaHum =
+                humedadMedida >= etapa.humedad.min &&
+                humedadMedida <= etapa.humedad.max;
+
+            bool esExito = pasaPh && pasaCe && pasaTemp && pasaHum;
+            String titulo = esExito
+                ? '¡Etapa superada!'
+                : 'Alerta de parámetros';
+            String mensaje = esExito
+                ? 'Tus parámetros de suelo cumplen a la perfección con la etapa de ${etapa.nombre}. ¡Buen trabajo!'
+                : 'Cuidado: Tienes parámetros fuera de rango para la etapa de ${etapa.nombre}. Revisa las necesidades de tu planta.';
+
+            _mostrarDialogoResultado(context, titulo, mensaje, esExito);
+            return;
+          }
+
+          // --- MODO 2: Flujo de Recomendación (ID = 0) ---
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Guardado localmente. Evaluando tierra...'),
@@ -72,34 +219,44 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
             ),
           );
 
-          // 1. Mandamos los datos al Cerebro Matemático
-          final diagnostico = ServicioDiagnostico.evaluarSuelo(
-            idCultivo: widget.idCultivoEsperado,
-            temp: double.parse(_tempController.text.trim()),
-            humedad: double.parse(_humedadController.text.trim()),
-            ph: double.parse(_phController.text.trim()),
-            ce: double.parse(_ceController.text.trim()),
-          );
-
-          // 2. Navegamos a la pantalla de Comparación pasándole el resultado
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ComparacionCultivo(
-                idCultivo: widget.idCultivoEsperado,
-                nombreMuestra: widget.nombreMuestra,
-                resultado: diagnostico,
-                ph: double.parse(_phController.text.trim()),
-                ce: double.parse(_ceController.text.trim()),
-                temp: double.parse(_tempController.text.trim()),
-                humedad: double.parse(_humedadController.text.trim()),
-                /*nombreLote: widget.nombreMuestra,
-                estado: widget.estado,
-                municipio: widget.municipio,
-                localidad: widget.localidad,*/
+          if (idCultivoFinal == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ResultadosRecomendacionScreen(
+                  nombreMuestra: loteFinal,
+                  ph: phMedido,
+                  ce: ceMedida,
+                  temp: tempMedida,
+                  humedad: humedadMedida,
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            // --- MODO 3: Flujo de Nuevo Cultivo ---
+            final diagnostico = ServicioDiagnostico.evaluarSuelo(
+              idCultivo: idCultivoFinal,
+              temp: tempMedida,
+              humedad: humedadMedida,
+              ph: phMedido,
+              ce: ceMedida,
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ComparacionCultivo(
+                  idCultivo: idCultivoFinal,
+                  nombreMuestra: loteFinal,
+                  resultado: diagnostico,
+                  ph: phMedido,
+                  ce: ceMedida,
+                  temp: tempMedida,
+                  humedad: humedadMedida,
+                ),
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -135,23 +292,16 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // 1. Imagen de Fondo
           SizedBox(
             width: double.infinity,
             height: double.infinity,
             child: Image.asset('assets/images/fondo.png', fit: BoxFit.cover),
           ),
-
-          // 2. Filtro oscuro para contraste
           Container(color: Colors.black.withOpacity(0.5)),
-
-          // 3. Formulario principal con efecto Cristal
           SafeArea(
             child: Column(
               children: [
-                // --- ENCABEZADO PERSONALIZADO ---
                 const EncabezadoPersonalizado(titulo: 'Ingresa tus Datos'),
-
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -180,15 +330,14 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Lote: ${widget.nombreMuestra}',
-                                    style: TextStyle(
+                                    'Lote: ${widget.siembra?.nombre ?? widget.nombreMuestra ?? 'Sin nombre'}',
+                                    style: const TextStyle(
                                       color: Colors.greenAccent,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   const SizedBox(height: 15),
-
                                   const Divider(
                                     color: Colors.white24,
                                     height: 40,
@@ -203,8 +352,6 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
                                     ),
                                   ),
                                   const SizedBox(height: 15),
-
-                                  // Campos de texto para mediciones
                                   Row(
                                     children: [
                                       Expanded(
@@ -261,10 +408,7 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
                                       ),
                                     ],
                                   ),
-
                                   const SizedBox(height: 30),
-
-                                  // Botón de Guardar
                                   SizedBox(
                                     width: double.infinity,
                                     height: 50,
@@ -313,14 +457,10 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
     );
   }
 
-  // Convierte el valor a double y acepta tanto punto como coma decimal.
-  // La validación del formulario se ejecuta antes de llegar a esta función.
   double _leerNumero(TextEditingController controller) {
     return double.parse(controller.text.trim().replaceAll(',', '.'));
   }
 
-  // --- Widget auxiliar para las cajas numéricas ---
-  // Los límites y decimales se indican individualmente en cada llamada.
   Widget _crearCampoTexto(
     String label,
     TextEditingController controller,
@@ -341,8 +481,6 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
         decimal: true,
         signed: permiteNegativos,
       ),
-      // Solo permite números, un separador decimal y, cuando corresponde,
-      // el signo menos al inicio. También limita los decimales permitidos.
       inputFormatters: [
         TextInputFormatter.withFunction((oldValue, newValue) {
           final texto = newValue.text;
@@ -380,8 +518,6 @@ class _CapturaManualSueloState extends State<CapturaManualSuelo> {
           return 'Dato obligatorio. Ej.: $ejemplo';
         }
 
-        // Exige al menos un dígito antes del separador y otro después.
-        // Acepta punto o coma como separador decimal.
         final formatoValido = permiteNegativos
             ? RegExp(r'^-?\d+(?:[.,]\d+)?$')
             : RegExp(r'^\d+(?:[.,]\d+)?$');

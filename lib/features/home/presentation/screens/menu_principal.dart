@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:io';
 //import 'package:calidad_del_suelo/features/monitor/presentation/screens/captura_manual.dart';
+import 'package:calidad_del_suelo/features/monitor/presentation/screens/registro_lote.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:calidad_del_suelo/features/profile/perfil_usuario.dart';
 import 'package:calidad_del_suelo/features/tracking/presentation/screens/mis_cultivos.dart';
@@ -20,7 +21,7 @@ class MenuPrincipal extends StatefulWidget {
 }
 
 class _MenuPrincipalState extends State<MenuPrincipal> {
-  int _indiceSeleccionado = 0;
+  //int _indiceSeleccionado = 0;
 
   String _nombreUsuario = 'Cargando...';
   File? _imagenPerfil;
@@ -129,25 +130,6 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     ],
                   ),
                   SizedBox(height: size.height * 0.03),
-
-                  // --- TARJETA 1: Seguimiento (Información extra eliminada) ---
-                  _TarjetaMenuCristalVerde(
-                    titulo: 'Seguimiento',
-                    iconoTitulo: Icons.analytics_outlined,
-                    descripcion:
-                        'Monitorea el estado, salud y crecimiento de tus cultivos.',
-                    textoBoton: 'Ver mis cultivos',
-                    alPresionar: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MisCultivos(),
-                        ),
-                      );
-                    },
-                  ),
-                  SizedBox(height: size.height * 0.02),
-
                   // --- TARJETA 2: Nuevo Cultivo (Información extra eliminada) ---
                   _TarjetaMenuCristalVerde(
                     titulo: 'Nuevo Cultivo',
@@ -187,6 +169,24 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                   ),
                   SizedBox(height: size.height * 0.02),
 
+                  // --- TARJETA 1: Seguimiento (Información extra eliminada) ---
+                  _TarjetaMenuCristalVerde(
+                    titulo: 'Seguimiento',
+                    iconoTitulo: Icons.analytics_outlined,
+                    descripcion:
+                        'Monitorea el estado, salud y crecimiento de tus cultivos.',
+                    textoBoton: 'Ver mis cultivos',
+                    alPresionar: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MisCultivos(),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: size.height * 0.02),
+
                   // --- TARJETA 3: Recomendaciones (Conserva los íconos) ---
                   _TarjetaMenuCristalVerde(
                     titulo: 'Recomendaciones',
@@ -194,17 +194,18 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     descripcion:
                         'No tienes ideas de que cultivar ten estas opciones dependiendo de los parametros de tu suelo.',
                     infoExtra: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 15.0),
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       ),
                     ),
-                    textoBoton: 'Ingresa Parametros',
+                    textoBoton: 'Ingresa Tus Parametros',
                     alPresionar: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SeleccionCultivo(),
+                          builder: (context) =>
+                              const RegistroLoteScreen(idCultivoEsperado: 0),
                         ),
                       );
                     },

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/tarjeta_cristal.dart';
+//import '../../../../core/widgets/tarjeta_cristal.dart';
 import '../../../crops/presentation/screens/seleccion_cultivo.dart';
 import '../../domain/servicio_diagnostico.dart'; // Importamos el cerebro matemático
 

@@ -2,18 +2,39 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import '../../../../core/constants/rutas_imagenes.dart';
-import '../../../../core/services/database_service.dart'; // <-- Base de datos local
-import 'panel_general_etapas.dart';
+import '../../../../core/services/database_service.dart';
 import '../../../../core/widgets/menu_inferior.dart';
 import '../../../home/presentation/screens/menu_principal.dart';
 import '../../../profile/perfil_usuario.dart';
 import '../../../crops/data/catalogo_cultivos.dart';
+import '../../../crops/domain/cultivo.dart';
+import '../../domain/siembra.dart';
+import 'panel_general_etapas.dart';
+
+// Función auxiliar para quitar acentos y comparar nombres de forma segura
+String _normalizarTexto(String texto) {
+  return texto
+      .toUpperCase()
+      .replaceAll('Á', 'A')
+      .replaceAll('É', 'E')
+      .replaceAll('Í', 'I')
+      .replaceAll('Ó', 'O')
+      .replaceAll('Ú', 'U')
+      .trim();
+}
+
+Cultivo _buscarCultivoEnCatalogo(String nombreGuardado) {
+  final nombreLimpio = _normalizarTexto(nombreGuardado);
+  return CatalogoCultivos.todos.firstWhere(
+    (c) => _normalizarTexto(c.nombre) == nombreLimpio,
+    orElse: () => CatalogoCultivos.todos.first,
+  );
+}
 
 class MisCultivos extends StatelessWidget {
   const MisCultivos({super.key});
 
-  // Función para obtener las siembras desde SQLite
-  Future<List<Map<String, dynamic>>> _obtenerSiembrasActivas() async {
+  Future<List> _obtenerSiembrasActivas() async {
     final db = await DatabaseService.instance.database;
     return await db.query('active_crops', orderBy: 'started_at DESC');
   }
@@ -43,7 +64,7 @@ class MisCultivos extends StatelessWidget {
 
             // 3. Contenido Principal con FutureBuilder
             SafeArea(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
+              child: FutureBuilder<List>(
                 future: _obtenerSiembrasActivas(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -95,30 +116,37 @@ class MisCultivos extends StatelessWidget {
                                   padding: const EdgeInsets.only(bottom: 14.0),
                                   child: GestureDetector(
                                     onTap: () {
-                                      // 1. Obtenemos el nombre exacto guardado en la base de datos local
-                                      String nombreGuardado =
+                                      final String nombreGuardado =
                                           siembraDB['crop_name'] ?? '';
+                                      final String nombreLote =
+                                          siembraDB['nombre_muestra'] ??
+                                          siembraDB['nombre_lote'] ??
+                                          'Sin nombre';
+                                      final String fechaISO =
+                                          siembraDB['started_at'] ??
+                                          DateTime.now().toIso8601String();
 
-                                      // 2. Buscamos en el catálogo global ignorando mayúsculas/minúsculas
-                                      final cultivoEncontrado = CatalogoCultivos
-                                          .todos
-                                          .firstWhere(
-                                            (c) =>
-                                                c.nombre.toUpperCase() ==
-                                                nombreGuardado.toUpperCase(),
-                                            orElse: () => CatalogoCultivos
-                                                .todos
-                                                .first, // Respaldo por defecto
+                                      final cultivoEncontrado =
+                                          _buscarCultivoEnCatalogo(
+                                            nombreGuardado,
                                           );
 
-                                      // Al tocar, navegamos al panel de etapas
+                                      final siembraActual = Siembra(
+                                        id: siembraDB['id'].toString(),
+                                        nombre: nombreLote,
+                                        cultivo: cultivoEncontrado,
+                                        fechaSiembra:
+                                            DateTime.tryParse(fechaISO) ??
+                                            DateTime.now(),
+                                      );
+
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => PanelGeneralEtapas(
-                                            cultivo:
-                                                cultivoEncontrado, //<-- Puedes pasarle el nombre aquí si lo necesitas
-                                          ),
+                                          builder: (context) =>
+                                              PanelGeneralEtapas(
+                                                siembra: siembraActual,
+                                              ),
                                         ),
                                       );
                                     },
@@ -140,9 +168,8 @@ class MisCultivos extends StatelessWidget {
           ],
         ),
       ),
-      // 5. MENÚ INFERIOR CON LÓGICA DE NAVEGACIÓN
       bottomNavigationBar: MenuInferior(
-        indiceSeleccionado: 1, // Estamos en "Mis Cultivos"
+        indiceSeleccionado: 1,
         alSeleccionar: (index) {
           if (index == 1) return;
           if (index == 0) {
@@ -152,7 +179,6 @@ class MisCultivos extends StatelessWidget {
             );
           }
           if (index == 2) {
-            // Navegar a la pantalla de Alertas (cuando la crees)
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -189,7 +215,6 @@ String _formatearFechaISO(String isoString) {
   }
 }
 
-// Tarjeta dinámica de siembra conectada a SQLite
 class _TarjetaSiembra extends StatelessWidget {
   final Map<String, dynamic> datosSiembra;
   final double anchoMaximo;
@@ -203,24 +228,18 @@ class _TarjetaSiembra extends StatelessWidget {
   Widget build(BuildContext context) {
     final double tamanoIcono = (anchoMaximo * 0.18).clamp(60.0, 85.0);
 
-    // Extraemos los datos de la base de datos
     final String nombreCultivo = datosSiembra['crop_name'] ?? 'Desconocido';
-    final String nombremuestra =
+    final String nombreMuestra =
         datosSiembra['nombre_muestra'] ??
-        'Sin nombre'; // <--- NUEVO: Leemos el lote
+        datosSiembra['nombre_lote'] ??
+        'Sin nombre';
     final String fechaISO = datosSiembra['started_at'] ?? '';
     final int etapaActual = datosSiembra['current_stage'] ?? 1;
 
     final String infoFecha =
         'Siembra: ${_formatearFechaISO(fechaISO)} | Etapa Actual: $etapaActual';
 
-    // 2. CORRECCIÓN DE IMAGEN: Buscamos el cultivo en tu catálogo
-    final cultivoOficial = CatalogoCultivos.todos.firstWhere(
-      (c) => c.nombre.toUpperCase() == nombreCultivo.toUpperCase(),
-      orElse: () => CatalogoCultivos.todos.first,
-    );
-
-    // Determinamos qué icono usar en base al nombre
+    final cultivoOficial = _buscarCultivoEnCatalogo(nombreCultivo);
     final String rutaImagenOficial = RutasImagenes.iconoCultivo(
       cultivoOficial.carpetaImagenes,
     );
@@ -278,7 +297,7 @@ class _TarjetaSiembra extends StatelessWidget {
                 ),
                 const SizedBox(height: 4.0),
                 AutoSizeText(
-                  'Lote: $nombremuestra', // <--- NUEVO: (Ej. Lote: Cuadrante Norte) Mostramos el terreno
+                  'Lote: $nombreMuestra',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15.0,
@@ -309,7 +328,6 @@ class _TarjetaSiembra extends StatelessWidget {
   }
 }
 
-// Mensaje cuando el usuario todavía no tiene siembras (MANTENIDO EXACTAMENTE IGUAL)
 class _MensajeSinCultivos extends StatelessWidget {
   const _MensajeSinCultivos();
 
