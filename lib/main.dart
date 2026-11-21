@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/presentation/screens/inicio.dart';
 import 'core/services/database_service.dart';
+import 'core/services/notificaciones_service.dart';
 
 void main() async {
   // Asegura que Flutter esté listo antes de arrancar bases de datos
@@ -16,6 +17,8 @@ void main() async {
 
   // Despierta a SQLite para que cree o lea las tablas
   await DatabaseService.instance.database;
+
+  await NotificacionesService.instance.inicializar();
 
   runApp(const CalidadDelSuelo()); // <-- Nombre actualizado aquí
 }

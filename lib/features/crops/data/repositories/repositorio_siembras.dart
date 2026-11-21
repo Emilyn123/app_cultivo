@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/database_service.dart';
+import '../../../../core/services/notificaciones_service.dart';
 
 class RepositorioSiembras {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -22,6 +23,18 @@ class RepositorioSiembras {
             1, // 1 = Etapa de Siembra (Única etapa activa por ahora)
         'started_at': DateTime.now().toIso8601String(),
       });
+
+      final int idSiembraLocal = await db.insert('active_crops', {
+        'crop_name': nombreCultivo,
+        'current_stage': 1,
+        'started_at': DateTime.now().toIso8601String(),
+      });
+
+      await NotificacionesService.instance.programarRecordatoriosSiembra(
+        idBase: idSiembraLocal,
+        nombreCultivo: nombreCultivo,
+        fechaSiembra: DateTime.now(),
+      );
 
       // Intento de sincronización con Supabase
       final userId = _supabase.auth.currentUser?.id;

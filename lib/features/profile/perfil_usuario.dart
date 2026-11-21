@@ -14,6 +14,7 @@ import '../tracking/presentation/screens/mis_cultivos.dart';
 import '../../core/widgets/menu_inferior.dart';
 import '../../core/services/database_service.dart';
 import '../weather/data/weather_service.dart';
+import '../alertas/domain/alertas_service.dart';
 
 class PerfilUsuario extends StatefulWidget {
   const PerfilUsuario({super.key});
@@ -70,25 +71,16 @@ class _PerfilUsuarioState extends State<PerfilUsuario> {
       }
 
       // C) Contar Alertas Activas reales del clima y siembras
-      int totalAlertas = 0;
+      //int totalAlertas = 0;
       final clima = await WeatherService().obtenerClima(
         WeatherService.defaultLat,
         WeatherService.defaultLon,
       );
-      if (clima != null) {
-        for (var dia in clima.pronostico) {
-          if (dia.probabilidadLluvia > 70) totalAlertas++;
-          if (dia.tempMax > 35) totalAlertas++;
-          if (dia.tempMin < 10) totalAlertas++;
-        }
-        if (clima.pronostico.length > 1) {
-          final manana = clima.pronostico[1];
-          for (var _ in siembras) {
-            if (manana.tempMax > 32) totalAlertas++;
-            if (manana.probabilidadLluvia > 60) totalAlertas++;
-          }
-        }
-      }
+      final alertasActivas = await AlertasService.generarTodas(
+        clima: clima,
+        siembras: siembras,
+      );
+      final int totalAlertas = alertasActivas.length;
 
       if (mounted) {
         setState(() {

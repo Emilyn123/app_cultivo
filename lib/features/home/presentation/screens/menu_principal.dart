@@ -12,6 +12,10 @@ import '../../../plagas/presentation/screens/bitacora_plagas_screen.dart';
 import '../../../fertilizacion/presentation/screens/bitacora_fertilizacion_screen.dart';
 import '../../../alertas/presentation/screens/alertas_screen.dart';
 import '../../../reports/presentation/screens/exportar_reporte_screen.dart';
+import '../../../alertas/domain/alertas_service.dart';
+import '../../../alertas/presentation/screens/alertas_screen.dart';
+import '../../../weather/data/weather_service.dart';
+import '../../../weather/domain/clima.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({super.key});
@@ -22,6 +26,7 @@ class MenuPrincipal extends StatefulWidget {
 
 class _MenuPrincipalState extends State<MenuPrincipal> {
   //int _indiceSeleccionado = 0;
+  int _totalAlertas = 0;
 
   String _nombreUsuario = 'Cargando...';
   File? _imagenPerfil;
@@ -30,6 +35,31 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   void initState() {
     super.initState();
     _cargarDatosPerfil();
+    _cargarConteoAlertas();
+  }
+
+  Future<void> _cargarConteoAlertas() async {
+    try {
+      ClimaCompleto? clima;
+      try {
+        clima = await WeatherService().obtenerClima(
+          WeatherService.defaultLat,
+          WeatherService.defaultLon,
+        );
+      } catch (_) {
+        clima = null;
+      }
+
+      final siembras = await DatabaseService.instance.obtenerSiembrasActivas();
+      final alertas = await AlertasService.generarTodas(
+        clima: clima,
+        siembras: siembras,
+      );
+
+      if (mounted) {
+        setState(() => _totalAlertas = alertas.length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _cargarDatosPerfil() async {
@@ -123,7 +153,18 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                       ),
                       Row(
                         children: [
-                          _IconoNotificacion(size: size.width * 0.07),
+                          _IconoNotificacion(
+                            size: size.width * 0.075,
+                            cantidad: _totalAlertas,
+                            alPresionar: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AlertasScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           SizedBox(width: size.width * 0.02),
                         ],
                       ),
@@ -425,26 +466,56 @@ class _TarjetaMenuCristalVerde extends StatelessWidget {
 // --- WIDGET PARA LAS CAMPANITAS CON PUNTO ROJO ---
 class _IconoNotificacion extends StatelessWidget {
   final double size;
-  const _IconoNotificacion({required this.size});
+  final int cantidad;
+  final VoidCallback alPresionar;
+  const _IconoNotificacion({
+    required this.size,
+    required this.cantidad,
+    required this.alPresionar,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Icon(Icons.notifications_none, color: Colors.white, size: size),
-        Positioned(
-          right: 2,
-          top: 2,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.deepOrange, // Punto naranja/rojo
-              shape: BoxShape.circle,
-            ),
-            constraints: const BoxConstraints(minWidth: 10, minHeight: 10),
+    return GestureDetector(
+      onTap: alPresionar,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(
+            cantidad > 0
+                ? Icons.notifications_active_outlined
+                : Icons.notifications_none,
+            color: Colors.white,
+            size: size,
           ),
-        ),
-      ],
+          if (cantidad > 0)
+            Positioned(
+              right: -4,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF0F1E12),
+                    width: 1.2,
+                  ),
+                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Text(
+                  cantidad > 9 ? '9+' : '$cantidad',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

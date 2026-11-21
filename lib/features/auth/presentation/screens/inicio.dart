@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'iniciar_sesion.dart';
 import '../../../../core/widgets/titulo_tul_luum.dart';
 import '../../../home/presentation/screens/menu_principal.dart';
@@ -55,6 +57,34 @@ class _InicioAnimadoState extends State<InicioAnimado>
   void dispose() {
     _controladorDeAnimacion.dispose();
     super.dispose();
+  }
+
+  Future<void> _abrirCorreoContacto(BuildContext context) async {
+    final Uri correoUri = Uri(
+      scheme: 'mailto',
+      path: 'tulluumapp@gmail.com',
+      query: 'subject=${Uri.encodeComponent("Contacto desde Tul lu'um App")}',
+    );
+
+    bool abierto = false;
+    try {
+      abierto = await launchUrl(correoUri);
+    } catch (e) {
+      debugPrint('Error al abrir correo: $e');
+    }
+
+    if (!abierto && context.mounted) {
+      await Clipboard.setData(
+        const ClipboardData(text: 'tulluumapp@gmail.com'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo abrir la app de correo. Correo copiado: tulluumapp@gmail.com',
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -244,7 +274,8 @@ class _InicioAnimadoState extends State<InicioAnimado>
                                   const SizedBox(height: 15),
 
                                   TextButton(
-                                    onPressed: () {},
+                                    onPressed: () =>
+                                        _abrirCorreoContacto(context),
                                     child: const Text(
                                       'Contáctanos',
                                       style: TextStyle(
